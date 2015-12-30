@@ -16,7 +16,12 @@
     "ionic": "^1.7.11",
     "shelljs": "^0.3.0"
   },
-  "cordovaPlugins": [],
+  "cordovaPlugins": [
+    {
+      "locator": "https://github.com/EddyVerbruggen/Toast-PhoneGap-Plugin",
+      "id": "cordova-plugin-x-toast"
+    }
+  ],
   "cordovaPlatforms": [
     "ios",
     "android"

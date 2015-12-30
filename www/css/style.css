@@ -1,1 +1,93 @@
 /* Empty. Add your own CSS if you like */
+.backgroundGradient {
+  background: rgba(82,255,171,1);
+  background: -moz-linear-gradient(top, rgba(82,255,171,1) 10%, rgba(64,232,192,1) 98%, rgba(64,231,192,1) 100%);
+  /*
+  background: -webkit-gradient(left top, left bottom, color-stop(10%, rgba(82,255,171,1)), color-stop(98%, rgba(64,232,192,1)), color-stop(100%, rgba(64,231,192,1)));
+  */
+  background: -webkit-linear-gradient(top, rgba(82,255,171,1) 10%, rgba(64,232,192,1) 98%, rgba(64,231,192,1) 100%);
+  background: -o-linear-gradient(top, rgba(82,255,171,1) 10%, rgba(64,232,192,1) 98%, rgba(64,231,192,1) 100%);
+  background: -ms-linear-gradient(top, rgba(82,255,171,1) 10%, rgba(64,232,192,1) 98%, rgba(64,231,192,1) 100%);
+  background: linear-gradient(to bottom, rgba(82,255,171,1) 10%, rgba(64,232,192,1) 98%, rgba(64,231,192,1) 100%);
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#52ffab', endColorstr='#40e7c0', GradientType=0 );
+}
+
+
+.titleContainer {
+  width: 100%;
+  text-align: center;
+}
+
+.title {
+  color: white;
+}
+
+.title-image {
+  margin-top:5px;
+}
+
+.error-item {
+  color:red;
+}
+
+/* Login */
+
+.form-item {
+  border-bottom: 1px solid grey;
+  margin-bottom: 1px;
+}
+/*
+.loginButtonItem {
+  border-top: 1px solid grey;
+}
+*/
+
+/* Portrait */
+@media screen
+and (max-device-height: 640px)
+and (orientation: portrait) {
+
+  .imageContainer {
+    margin: 10% auto;
+  }
+
+
+  .botonesContainer {
+    padding-top:20%;
+  }
+
+  /* Login */
+
+  /*
+  .loginFormContainer {
+    margin-top: 10%;
+  }
+*/
+}
+
+@media screen
+and (min-device-height: 641px)
+and (orientation: portrait) {
+
+  .imageContainer {
+    margin: 20% auto;
+  }
+
+
+  .botonesContainer {
+    padding-top:30%;
+  }
+
+  /* Login */
+  /*
+  .loginFormContainer {
+    margin-top: 20%;
+  }
+*/
+}
+
+
+/* Tiene que ir al final */
+.has-error {
+  border-bottom: 1px solid red;
+}

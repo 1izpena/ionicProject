@@ -9,8 +9,16 @@ angular.module('ionicDessiApp.controllers', [])
   //$scope.$on('$ionicView.enter', function(e) {
   //});
 
+    if($scope.message !== undefined){
+      showToast($scope.message);
+    }
+
     if(LoginService.isLogged()){
-      $state.go('chat');
+      $state.go('chat.channel');
+    }
+
+    if($scope.message !== undefined) {
+      showToast($scope.message);
     }
 
   // Form data for the login modal
@@ -43,8 +51,9 @@ angular.module('ionicDessiApp.controllers', [])
         LoginService.login(user).then(function(res) {
           window.localStorage.setItem('username', res.data.username);
           window.localStorage.setItem('token', res.data.token);
+          window.localStorage.setItem('userid', res.data.id);
           $scope.loginmodal.hide();
-          $state.go('chat');
+          $state.go('chat.channel');
         }, function(res) {
           showAlert(res.data.message);
         });
@@ -95,21 +104,74 @@ angular.module('ionicDessiApp.controllers', [])
       }
     };
 
-    function showToast(message) {
-      if (window.plugins && window.plugins.toast) {
-        window.plugins.toast.showShortCenter(message);
-      }
-      else $ionicLoading.show({ template: message, noBackdrop: true, duration: 2000 });
-    }
+
 })
 
-.controller('ChatCtrl', function($scope, $state) {
+.controller('ChatCtrl', function($scope, $state, GroupsService) {
+
+  $scope.showGroups = false;
+  $scope.showChannels = false;
+  $scope.showUsers = false;
+  $scope.groups = 0;
+  $scope.activeGroup = 0;
+
+    $scope.updateActiveGroup = function(i) {
+      $scope.activeGroup = i;
+    }
+
+    GroupsService.getChatInfo().then(function (data) {
+        $scope.groups = data;
+      }
+      , function (err) {
+        // Tratar el error
+        console.log("Hay error");
+        console.log(err.message);
+        if(err.code === 419){
+          $scope.logout();
+          $state.go('home', {message:err.message}).then();
+
+        } else {
+          $scope.error = err.message;
+        }
+
+      });
+
   $scope.logout = function() {
     window.localStorage.removeItem('username');
     window.localStorage.removeItem('token');
+    window.localStorage.removeItem('userid');
+
     $state.go('home');
+  };
+
+  $scope.toggleGroups = function() {
+    $scope.showGroups = !$scope.showGroups;
   }
+
+  $scope.toggleChannels = function() {
+    $scope.showChannels = !$scope.showChannels;
+  }
+
+  $scope.unhideChannels = function(cond) {
+    $scope.showChannels = cond;
+  }
+
+  $scope.toggleUsers = function() {
+    $scope.showUsers = !$scope.showUsers;
+  }
+
+  $scope.unhideUsers = function(cond) {
+    $scope.showUsers = cond;
+  }
+
 })
 
 .controller('PlaylistCtrl', function($scope, $stateParams) {
 });
+
+function showToast(message) {
+  if (window.plugins && window.plugins.toast) {
+    window.plugins.toast.showShortCenter(message);
+  }
+  else $ionicLoading.show({ template: message, noBackdrop: true, duration: 2000 });
+}

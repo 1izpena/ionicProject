@@ -30,6 +30,15 @@
   color:red;
 }
 
+.item-divider-principal {
+  background-color: #9900CC;
+  color: white;
+}
+
+.list {
+  padding: 0;
+}
+
 /* Login */
 
 .form-item {
@@ -64,6 +73,72 @@ and (orientation: portrait) {
   }
 */
 }
+
+/* Chat */
+
+.groups.ng-hide {
+  line-height: 0px;
+
+  /* Set our transitions up. */
+
+}
+
+.groups {
+  line-height: 100%;
+  padding-top: 0;
+  padding-bottom: 0;
+  transition: 0.1s all linear;
+}
+
+.channels.ng-hide {
+  line-height: 0px;
+
+  /* Set our transitions up. */
+
+}
+
+.channels {
+  line-height: 100%;
+  padding-top: 0;
+  padding-bottom: 0;
+  transition: 0.1s all linear;
+}
+
+.users.ng-hide {
+  line-height: 0px;
+
+  /* Set our transitions up. */
+
+}
+
+.users {
+  line-height: 100%;
+  padding-top: 0;
+  padding-bottom: 0;
+  transition: 0.1s all linear;
+}
+
+.chatFooter {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  display: flex;
+}
+
+.message-input-chat {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.more-button-chat {
+  border: none;
+}
+
+.button-chat {
+  /*margin: 0 10px;*/
+}
+
+
 
 @media screen
 and (min-device-height: 641px)

@@ -4,7 +4,7 @@
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
 // 'starter.controllers' is found in controllers.js
-angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDessiApp.config'])
+angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDessiApp.config', 'ngAnimate'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
@@ -33,7 +33,16 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
     .state('chat', {
       url: '/chat',
       templateUrl: 'templates/chat.html',
+      abstract: true,
       controller: 'ChatCtrl'
+    })
+    .state('chat.channel', {
+      url: '/channel',
+      views: {
+        'menuContent': {
+          templateUrl: 'templates/channel.html'
+        }
+      }
     });
   // if none of the above states are matched, use this as the fallback
   $urlRouterProvider.otherwise('/');

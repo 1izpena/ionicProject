@@ -107,34 +107,45 @@ angular.module('ionicDessiApp.controllers', [])
 
 })
 
-.controller('ChatCtrl', function($scope, $state, GroupsService) {
+.controller('ChatCtrl', function($scope, $state, GroupsService, ChatService, $ionicPopup) {
 
-  $scope.showGroups = false;
+  $scope.showGroups = true;
   $scope.showChannels = false;
   $scope.showUsers = false;
+  $scope.showInvitations = false;
   $scope.groups = 0;
+  $scope.messages = null;
   $scope.activeGroup = 0;
+  $scope.activeChannel = null;
 
-    $scope.updateActiveGroup = function(i) {
-      $scope.activeGroup = i;
+  $scope.updateActiveGroup = function(i) {
+    $scope.activeGroup = i;
+  }
+
+  GroupsService.getChatInfo().then(function (data) {
+      $scope.groups = data;
     }
+    , function (err) {
+      // Tratar el error
+      console.log("Hay error");
+      console.log(err.message);
+      if(err.code === 419){
+        $scope.logout();
+        $state.go('home', {message:err.message}).then();
 
-    GroupsService.getChatInfo().then(function (data) {
-        $scope.groups = data;
+      } else {
+        $scope.error = err.message;
       }
-      , function (err) {
-        // Tratar el error
-        console.log("Hay error");
-        console.log(err.message);
-        if(err.code === 419){
-          $scope.logout();
-          $state.go('home', {message:err.message}).then();
 
-        } else {
-          $scope.error = err.message;
-        }
+  });
 
-      });
+  ChatService.getInvitations().then(function (data) {
+      $scope.invitations = data;
+    }
+    , function (err) {
+      $scope.error = err.message;
+  });
+
 
   $scope.logout = function() {
     window.localStorage.removeItem('username');
@@ -162,6 +173,185 @@ angular.module('ionicDessiApp.controllers', [])
 
   $scope.unhideUsers = function(cond) {
     $scope.showUsers = cond;
+  }
+
+  $scope.selectChannel = function(index, type){
+    if(type === 'private') {
+      $scope.activeChannel = $scope.groups[$scope.activeGroup - 1].privateChannels[index];
+    } else {
+      $scope.activeChannel = $scope.groups[$scope.activeGroup - 1].publicChannels[index];
+    }
+    getMessages($scope.activeGroup - 1, index, type);
+  }
+
+  function getMessages(groupindex, channelindex, type) {
+    if(type === 'public'){
+      ChatService.getMessages($scope.groups[groupindex].id, $scope.groups[groupindex].publicChannels[channelindex]).then(function(data){
+        $scope.messages = data;
+        addMessages(data);
+      });
+    } else {
+      ChatService.getMessages($scope.groups[groupindex].id, $scope.groups[groupindex].privateChannels[channelindex]).then(function (data) {
+        $scope.messages = data;
+      });
+    }
+  }
+
+  function addMessages(messages) {
+    for(var i = 0; i<messages.data.length; i++) {
+      var newMessage = document.createElement('div');
+      newMessage.classList.add('item');
+      newMessage.classList.add('item-text-wrap');
+      var messageText = document.createTextNode(messages.data[i].user.username+': '+messages.data[i].text);
+      newMessage.appendChild(messageText);
+      document.getElementById('cardList').appendChild(newMessage);
+    }
+  }
+
+  function addMessage(message) {
+    var newMessage = document.createElement('div');
+    newMessage.classList.add('item');
+    newMessage.classList.add('item-text-wrap');
+    var messageText = document.createTextNode(window.localStorage.getItem('username')+': '+message);
+    newMessage.appendChild(messageText);
+    document.getElementById('cardList').appendChild(newMessage);
+  }
+
+  $scope.sendText = function (text) {
+
+    addMessage(text);
+
+    var data = {
+      userid: window.localStorage.getItem('userid'),
+      groupid: $scope.groups[$scope.activeGroup - 1].id,
+      channelid: $scope.activeChannel.id,
+      text: text,
+      messageType: 'TEXT'
+    };
+
+    ChatService.postMessage(data).then(
+      function (result) {
+        $scope.text = "";
+        console.log(result.data);
+      },
+      function (error) {
+        // TODO: Mostrar error
+        console.log(error);
+      }
+    );
+  }
+
+  $scope.clearMessages = function() {
+    var div = document.getElementById('cardList');
+    while (div.firstChild) {
+      div.removeChild(div.firstChild);
+    }
+    $scope.activeChannel = null;
+    $scope.activeGroup = 0;
+  }
+
+  $scope.showNewChannelPopup = function(type) {
+    $scope.newChannel = {};
+
+    $ionicPopup.show({
+      template: '<input type="text" placeholder="Channel Name" ng-model="newChannel.channelName">',
+      title: 'Enter new channel name',
+      scope: $scope,
+      buttons: [
+        {text: 'Cancel'},
+        {
+          text: '<b>Confirm</b>',
+          type: 'button-positive',
+          onTap: function (e) {
+            if (!$scope.newChannel.channelName) {
+              showErrorAlert('Channel name is required');
+            } else {
+              $scope.newChannel.channelType = type;
+              GroupsService.createNewChannel($scope.groups[$scope.activeGroup - 1].id, $scope.newChannel).then(
+                function(data) {
+                  if(type === 'PUBLIC') {
+                    $scope.groups[$scope.activeGroup - 1].publicChannels[$scope.groups[$scope.activeGroup - 1].publicChannels.length] = data.data;
+                  } else {
+                    $scope.groups[$scope.activeGroup - 1].privateChannels[$scope.groups[$scope.activeGroup - 1].privateChannels.length] = data.data;
+                  }
+                },function(err){
+                  // Tratar el error
+                  showErrorAlert(err);
+                }
+              );
+            }
+          }
+        }
+      ]
+    });
+  };
+
+  $scope.showNewGroupPopup = function() {
+    $scope.data = {};
+
+    $ionicPopup.show({
+      template: '<input type="text" placeholder="Group Name" ng-model="data.groupName">',
+      title: 'Enter new group name',
+      scope: $scope,
+      buttons: [
+        {text: 'Cancel'},
+        {
+          text: '<b>Confirm</b>',
+          type: 'button-positive',
+          onTap: function (e) {
+            if (!$scope.data.groupName) {
+              showErrorAlert('Group name is required');
+            } else {
+              GroupsService.createNewGroup($scope.data).then(
+                function(data) {
+                  GroupsService.getChannels(data.data.id).then(
+                    function(dataChannels) {
+                      $scope.groups[$scope.groups.length] = dataChannels;
+                    }, function(err) {
+                      showErrorAlert(err);
+                    }
+                  );
+                },function(err){
+                  // Tratar el error
+                  showErrorAlert(err);
+                }
+              );
+            }
+          }
+        }
+      ]
+    });
+  };
+
+  $scope.showInviteUserPopup = function() {
+    $scope.data = {};
+
+    $ionicPopup.show({
+      template: '<input type="text" placeholder="User email" ng-model="data.newUser">',
+      title: 'Invite new user',
+      scope: $scope,
+      buttons: [
+        {text: 'Cancel'},
+        {
+          text: '<b>Confirm</b>',
+          type: 'button-positive',
+          onTap: function (e) {
+            if (!$scope.data.newUser) {
+              showErrorAlert('Email is required');
+            } else {
+              return $scope.data.newUser;
+            }
+          }
+        }
+      ]
+    });
+  };
+
+  function showErrorAlert(message) {
+    var alertPopup = $ionicPopup.alert({
+      title: 'Error!',
+      template: message
+    });
   }
 
 })

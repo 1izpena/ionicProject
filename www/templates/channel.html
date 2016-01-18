@@ -16,7 +16,9 @@
 -->
 <ion-view>
   <ion-content class="padding">
-    Some content!
+    <div id="cardList" lass="list card">
+
+    </div>
   </ion-content>
   <!--
   <ion-footer-bar align-title="left" class="bar-stable">
@@ -31,14 +33,20 @@
     </div>
   </ion-footer-bar>
   -->
+  <!--
   <div class="bar bar-footer bar-stable item-input-inset footer-item-input-insert">
+  -->
+  <ion-footer-bar class="bar-stable item-input-inset footer-item-input-insert">
     <button class="button button-clear button-balanced icon ion-plus-circled">
     </button>
     <label class="item-input-wrapper">
-      <input type="text" placeholder="Message">
+      <input type="text" placeholder="Message" ng-model="text">
     </label>
-    <button class="button button-clear button-positive">
+    <button class="button button-clear button-positive" ng-click="sendText(text); text='';">
       <strong>send</strong>
     </button>
+  </ion-footer-bar>
+  <!--
   </div>
+  -->
 </ion-view>

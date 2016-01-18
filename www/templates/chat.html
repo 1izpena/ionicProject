@@ -76,11 +76,22 @@
       </ion-header-bar>
       <ion-content>
         <ion-list>
-          <!-- Groups -->
-          <ion-item ng-click="updateActiveGroup(0); unhideChannels(false); unhideUsers(false);" class="item-divider item-divider-principal item-icon-right">
+          <!-- Invitations -->
+          <ion-item class="item-divider item-divider-principal item-icon-right" ng-show="showInvitations">
             Groups
-            <span class="icon ion-arrow-down-b" ng-click="toggleGroups()" ng-if="!showGroups"></span>
-            <span class="icon ion-arrow-up-b" ng-click="toggleGroups()" ng-if="showGroups"></span>
+          </ion-item>
+
+          <div class="invitations" ng-show="showInvitations">
+            <div ng-repeat="invitation in invitations">
+              <ion-item>
+                {{invitation}}
+              </ion-item>
+            </div>
+          </div>
+          <!-- Groups -->
+          <ion-item ng-click="updateActiveGroup(0); unhideChannels(false); unhideUsers(false); clearMessages();" class="item-divider item-divider-principal item-icon-right">
+            Groups
+            <span class="icon ion-plus-circled" ng-click="showNewGroupPopup()"></span>
           </ion-item>
 
           <div class="groups" ng-show="showGroups">
@@ -93,19 +104,17 @@
           <!-- Channels -->
           <ion-item class="item-divider item-divider-principal item-icon-right" ng-show="showChannels">
             Channels
-            <span class="icon ion-arrow-down-b" ng-if="!showChannels"></span>
-            <span class="icon ion-arrow-up-b" ng-if="showChannels"></span>
           </ion-item>
 
           <ion-item class="item-divider item-icon-right" ng-show="showChannels">
             Public
-            <span class="icon ion-plus"></span>
+            <span class="icon ion-plus-circled" ng-click="showNewChannelPopup('PUBLIC')"></span>
           </ion-item>
 
           <div class="channels" ng-show="showChannels">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index+1" ng-repeat="channels in group.publicChannels">
-                <ion-item>
+                <ion-item ng-click="selectChannel($index, 'public')" menu-close>
                   {{channels.channelName}}
                 </ion-item>
               </div>
@@ -114,13 +123,13 @@
 
           <ion-item class="item-divider item-icon-right" ng-show="showChannels">
             Private
-            <span class="icon ion-plus"></span>
+            <span class="icon ion-plus-circled" ng-click="showNewChannelPopup('PRIVATE')"></span>
           </ion-item>
 
           <div class="channels" ng-show="showChannels">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index+1" ng-repeat="channels in group.privateChannels">
-                <ion-item>
+                <ion-item ng-click="selectChannel($index, 'private')" menu-close>
                   {{channels.channelName}}
                 </ion-item>
               </div>
@@ -130,14 +139,13 @@
           <!-- Users -->
           <ion-item class="item-divider item-divider-principal item-icon-right" ng-show="showUsers">
             Users
-            <span class="icon ion-arrow-down-b" ng-if="!showUsers"></span>
-            <span class="icon ion-arrow-up-b" ng-if="showUsers"></span>
+            <span class="icon ion-plus-circled" ng-click="showInviteUserPopup()"></span>
           </ion-item>
 
           <div class="users">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index+1" ng-repeat="user in group.users">
-                <ion-item>
+                <ion-item menu-close>
                   {{user.username}}
                 </ion-item>
               </div>

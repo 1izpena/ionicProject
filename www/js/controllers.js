@@ -1,6 +1,6 @@
 angular.module('ionicDessiApp.controllers', [])
 
-.controller('AppCtrl', function($scope, $ionicModal, $timeout, $state, LoginService, SignupService, $ionicPopup) {
+.controller('AppCtrl', function($scope, $ionicModal, $timeout, $state, LoginService, SignupService, $ionicPopup, ResetService) {
 
   // With the new view caching in Ionic, Controllers are only called
   // when they are recreated or on app start, instead of every page change.
@@ -97,12 +97,48 @@ angular.module('ionicDessiApp.controllers', [])
         SignupService.signup(user).then(function(res) {
           $scope.signupmodal.hide();
           $scope.loginmodal.show();
-          showToast('Signed up succesfully!!');
+          showToast('Signed up succesfully!! Check your email to activate your account');
         }, function(res) {
           showAlert(res.data.message);
         });
       }
     };
+
+    $scope.forgotPassword = function() {
+      $scope.data = {};
+      $ionicPopup.show({
+        template: '<input type="text" placeholder="Email" ng-model="data.mail">',
+        title: 'Forgot password',
+        subtitle: 'Enter your mail in order to remember your password',
+        scope: $scope,
+        buttons: [
+          {text: 'Cancel'},
+          {
+            text: '<b>Confirm</b>',
+            type: 'button-positive',
+            onTap: function (e) {
+              if (!$scope.data.mail) {
+                showErrorAlert('Email is required');
+              } else {
+                ResetService.check($scope.data).then(function(res)
+                {
+                  if(window.localStorage.getItem('ResetToken') !=null)
+                  {
+                    delete window.localStorage.removeItem('ResetToken');
+                  }
+
+                  window.localStorage.setItem('ResetToken', res.data);
+
+                },function(res)
+                {
+                  showAlert(res.data.message);
+                });
+              }
+            }
+          }
+        ]
+      });
+    }
 
 
 })

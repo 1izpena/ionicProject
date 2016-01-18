@@ -1,0 +1,52 @@
+<!--
+<ion-view>
+  <ion-content class="padding">
+    Some content!
+
+  </ion-content>
+  <div class="chatFooter padding">
+    <div class="buttons">
+      <button class="button more-button-chat"><span class="icon ion-plus"></span></button>
+    </div>
+    <label class="item item-input message-input-chat">
+      <input type="text" placeholder="Message">
+    </label>
+  </div>
+</ion-view>
+-->
+<ion-view>
+  <ion-content class="padding">
+    <div id="cardList" lass="list card">
+
+    </div>
+  </ion-content>
+  <!--
+  <ion-footer-bar align-title="left" class="bar-stable">
+    <div class="buttons button-chat">
+      <button class="button icon ion-plus more-button-chat"></button>
+    </div>
+    <label class="item item-input message-input-chat">
+      <input type="text" placeholder="Message">
+    </label>
+    <div class="buttons button-chat">
+      <button class="button button-clear button-positive"><strong>Send</strong></button>
+    </div>
+  </ion-footer-bar>
+  -->
+  <!--
+  <div class="bar bar-footer bar-stable item-input-inset footer-item-input-insert">
+  -->
+  <ion-footer-bar class="bar-stable item-input-inset footer-item-input-insert">
+    <button class="button button-clear button-balanced icon ion-plus-circled">
+    </button>
+    <label class="item-input-wrapper">
+      <input type="text" placeholder="Message" ng-model="text">
+    </label>
+    <button class="button button-clear button-positive" ng-click="sendText(text); text='';">
+      <strong>send</strong>
+    </button>
+  </ion-footer-bar>
+  <!--
+  </div>
+  -->
+</ion-view>

@@ -283,7 +283,6 @@ angular.module('ionicDessiApp.controllers', [])
       div.removeChild(div.firstChild);
     }
     $scope.activeChannel = null;
-    $scope.activeGroup = 0;
   }
 
   $scope.showNewChannelPopup = function(type) {

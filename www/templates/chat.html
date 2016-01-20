@@ -89,14 +89,14 @@
             </div>
           </div>
           <!-- Groups -->
-          <ion-item ng-click="updateActiveGroup(0); unhideChannels(false); unhideUsers(false); clearMessages();" class="item-divider item-divider-principal item-icon-right">
+          <ion-item ng-click="updateActiveGroup(0); unhideChannels(false); unhideUsers(false); clearMessages(); activeGroup = 0;" class="item-divider item-divider-principal item-icon-right">
             Groups
             <span class="icon ion-plus-circled" ng-click="showNewGroupPopup()"></span>
           </ion-item>
 
           <div class="groups" ng-show="showGroups">
             <div ng-repeat="group in groups">
-              <ion-item ng-click="updateActiveGroup($index+1); unhideChannels(true); unhideUsers(true);" ng-show="activeGroup === $index+1 || activeGroup === 0">
+              <ion-item ng-click="updateActiveGroup($index+1); unhideChannels(true); unhideUsers(true); clearMessages();" ng-show="activeGroup === $index+1 || activeGroup === 0">
                 {{group.groupName}}
               </ion-item>
             </div>
@@ -114,7 +114,7 @@
           <div class="channels" ng-show="showChannels">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index+1" ng-repeat="channels in group.publicChannels">
-                <ion-item ng-click="selectChannel($index, 'public')" menu-close>
+                <ion-item ng-click="clearMessages(); selectChannel($index, 'public');" menu-close>
                   {{channels.channelName}}
                 </ion-item>
               </div>
@@ -129,7 +129,7 @@
           <div class="channels" ng-show="showChannels">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index+1" ng-repeat="channels in group.privateChannels">
-                <ion-item ng-click="selectChannel($index, 'private')" menu-close>
+                <ion-item ng-click="clearMessages(); selectChannel($index, 'private');" menu-close>
                   {{channels.channelName}}
                 </ion-item>
               </div>

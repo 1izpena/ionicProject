@@ -46,4 +46,7 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
     });
   // if none of the above states are matched, use this as the fallback
   $urlRouterProvider.otherwise('/');
-});
+})
+  .config(['$httpProvider', function($httpProvider) {
+    $httpProvider.interceptors.push('responseHandler');
+  }]);

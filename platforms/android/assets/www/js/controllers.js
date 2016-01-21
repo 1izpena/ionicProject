@@ -1,6 +1,6 @@
 angular.module('ionicDessiApp.controllers', [])
 
-.controller('AppCtrl', function($scope, $ionicModal, $timeout, $state, LoginService, SignupService, $ionicPopup, ResetService) {
+.controller('AppCtrl', function($scope, $ionicModal, $timeout, $state, LoginService, SignupService, $ionicPopup, ResetService, $stateParams) {
 
   // With the new view caching in Ionic, Controllers are only called
   // when they are recreated or on app start, instead of every page change.
@@ -9,8 +9,8 @@ angular.module('ionicDessiApp.controllers', [])
   //$scope.$on('$ionicView.enter', function(e) {
   //});
 
-    if($scope.message !== undefined){
-      showToast($scope.message);
+    if($stateParams.message !== null){
+      showToast($stateParams.message);
     }
 
     if(LoginService.isLogged()){
@@ -120,7 +120,7 @@ angular.module('ionicDessiApp.controllers', [])
               if (!$scope.data.mail) {
                 showErrorAlert('Email is required');
               } else {
-                ResetService.check($scope.FormData).then(function(res)
+                ResetService.check($scope.data).then(function(res)
                 {
                   if(window.localStorage.getItem('ResetToken') !=null)
                   {
@@ -283,7 +283,6 @@ angular.module('ionicDessiApp.controllers', [])
       div.removeChild(div.firstChild);
     }
     $scope.activeChannel = null;
-    $scope.activeGroup = 0;
   }
 
   $scope.showNewChannelPopup = function(type) {

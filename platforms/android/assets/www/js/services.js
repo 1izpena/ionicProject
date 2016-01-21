@@ -52,21 +52,21 @@ angular.module('ionicDessiApp')
       check: function(data) {
         return $http({
           method: 'POST',
-          url: API_BASE+'/api/v1/auth/forget',
+          url: API_BASE+'api/v1/auth/forget',
           data: {mail: data.mail}
         });
       },
       activate: function(token) {
         return $http({
           method: 'POST',
-          url: API_BASE+'/api/v1/auth/activate',
+          url: API_BASE+'api/v1/auth/activate',
           data: {token: token}
         });
       },
       reset: function(data,token){
         return $http({
           method:'POST',
-          url:API_BASE+'/api/v1/auth/reset',
+          url:API_BASE+'api/v1/auth/reset',
           data: {token: token , password: data.password}
         });
       }
@@ -339,4 +339,22 @@ angular.module('ionicDessiApp')
 
         return promise;
       }
-    }]);
+    }])
+  .factory('responseHandler', ['$q', '$injector', function($q, $injector, $state) {
+    var responseHandler = {
+      responseError: function(response) {
+        // Session has expired
+        if (response.status == 419){
+          var state = $injector.get('$state');
+
+          window.localStorage.removeItem('userid');
+          window.localStorage.removeItem('username');
+          window.localStorage.removeItem('token');
+          state.go('home', {message:response.data.message});
+
+        }
+        return $q.reject(response);
+      }
+    };
+    return responseHandler;
+  }]);

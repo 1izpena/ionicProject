@@ -1,6 +1,6 @@
 angular.module('ionicDessiApp.controllers', [])
 
-.controller('AppCtrl', function($scope, $ionicModal, $timeout, $state, LoginService, SignupService, $ionicPopup, ResetService) {
+.controller('AppCtrl', function($scope, $ionicModal, $timeout, $state, LoginService, SignupService, $ionicPopup, ResetService, $stateParams, $ionicLoading) {
 
   // With the new view caching in Ionic, Controllers are only called
   // when they are recreated or on app start, instead of every page change.
@@ -9,8 +9,8 @@ angular.module('ionicDessiApp.controllers', [])
   //$scope.$on('$ionicView.enter', function(e) {
   //});
 
-    if($scope.message !== undefined){
-      showToast($scope.message);
+    if($stateParams.message !== null){
+      showToast($stateParams.message, $ionicLoading);
     }
 
     if(LoginService.isLogged()){
@@ -394,7 +394,7 @@ angular.module('ionicDessiApp.controllers', [])
 .controller('PlaylistCtrl', function($scope, $stateParams) {
 });
 
-function showToast(message) {
+function showToast(message, $ionicLoading) {
   if (window.plugins && window.plugins.toast) {
     window.plugins.toast.showShortCenter(message);
   }

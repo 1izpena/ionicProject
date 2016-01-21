@@ -346,14 +346,11 @@ angular.module('ionicDessiApp')
         // Session has expired
         if (response.status == 419){
           var state = $injector.get('$state');
-          // Create a new session (recover the session)
-          // We use login method that logs the user in using the current credentials and
-          // returns a promise
+
           window.localStorage.removeItem('userid');
           window.localStorage.removeItem('username');
           window.localStorage.removeItem('token');
           state.go('home', {message:response.data.message});
-          // When the session recovered, make the same backend call again and chain the request
 
         }
         return $q.reject(response);

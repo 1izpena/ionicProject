@@ -28,7 +28,10 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
     .state('home', {
     url: '/',
     templateUrl: 'templates/home.html',
-    controller: 'AppCtrl'
+    controller: 'AppCtrl',
+    params: {
+      message: null
+    }
   })
     .state('chat', {
       url: '/chat',

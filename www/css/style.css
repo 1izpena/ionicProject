@@ -35,6 +35,10 @@
   color: white;
 }
 
+.item-divider-invitations {
+
+}
+
 .list {
   padding: 0;
 }
@@ -142,6 +146,26 @@ and (orientation: portrait) {
   /*margin: 0 10px;*/
 }
 
+#rightBarContent > .scroll {
+  height: 100%;
+}
+
+#menuList > .list {
+  height: 100%;
+  text-align: center;
+}
+
+.row {
+  margin-top: 0px;
+}
+
+.row + .row {
+  margin-top: 0px;
+}
+
+#messageContent {
+  background-color: linen;
+}
 
 
 @media screen

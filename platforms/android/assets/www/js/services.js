@@ -96,12 +96,23 @@ angular.module('ionicDessiApp')
          for( var i = 0; i<info.length; i++){
 
            getChannels(info[i].id).then(function (data) {
+               /*
                info[j].publicChannels = data.publicChannels;
                info[j].privateChannels = data.privateChannels;
                j++;
                if(info.length === j && j === k){
                  defered.resolve(info);
                }
+               */
+               var broken = false;
+               for(var j = 0 ; j<info.length ; j++) {
+                 if(info[j].id === data.id) {
+                   info[j].publicChannels = data.publicChannels;
+                   info[j].privateChannels = data.privateChannels;
+                   break;
+                 }
+               }
+               //defered.resolve(info);
              }
              , function (err) {
                // Tratar el error
@@ -112,7 +123,7 @@ angular.module('ionicDessiApp')
            getGroupMembers(info[i].id).then(function (data) {
                info[k].users = data;
                k++;
-               if(info.length === k && k === j){
+               if(info.length === k){
                  defered.resolve(info);
                }
              }
@@ -340,6 +351,11 @@ angular.module('ionicDessiApp')
         return promise;
       }
     }])
+
+  .factory('Socket', ['API_BASE', function(API_BASE) {
+    return io.connect(API_BASE);
+  }])
+
   .factory('responseHandler', ['$q', '$injector', function($q, $injector, $state) {
     var responseHandler = {
       responseError: function(response) {
@@ -357,4 +373,18 @@ angular.module('ionicDessiApp')
       }
     };
     return responseHandler;
-  }]);
+  }])
+
+  //DIRECTIVES
+  .directive('onFinishRender', function ($timeout) {
+    return {
+      restrict: 'A',
+      link: function (scope, element, attr) {
+        if (scope.$last === true) {
+          $timeout(function () {
+            scope.$emit('messageRenderCallback');
+          });
+        }
+      }
+    }
+  });;

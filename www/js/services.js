@@ -81,6 +81,7 @@ angular.module('ionicDessiApp')
       getChatInfo: getChatInfo,
       createNewGroup: createNewGroup,
       createNewChannel: createNewChannel,
+      getGroupMembers: getGroupMembers,
       getChannels: getChannels
     };
 
@@ -96,12 +97,23 @@ angular.module('ionicDessiApp')
          for( var i = 0; i<info.length; i++){
 
            getChannels(info[i].id).then(function (data) {
+               /*
                info[j].publicChannels = data.publicChannels;
                info[j].privateChannels = data.privateChannels;
                j++;
                if(info.length === j && j === k){
                  defered.resolve(info);
                }
+               */
+               var broken = false;
+               for(var j = 0 ; j<info.length ; j++) {
+                 if(info[j].id === data.id) {
+                   info[j].publicChannels = data.publicChannels;
+                   info[j].privateChannels = data.privateChannels;
+                   break;
+                 }
+               }
+               //defered.resolve(info);
              }
              , function (err) {
                // Tratar el error
@@ -112,7 +124,7 @@ angular.module('ionicDessiApp')
            getGroupMembers(info[i].id).then(function (data) {
                info[k].users = data;
                k++;
-               if(info.length === k && k === j){
+               if(info.length === k){
                  defered.resolve(info);
                }
              }
@@ -235,7 +247,9 @@ angular.module('ionicDessiApp')
         uploadFileS3: uploadFileS3,
         postMessage: postMessage,
         getMessages: getMessages,
-        getInvitations: getInvitations
+        getInvitations: getInvitations,
+        acceptInvitation: acceptInvitation,
+        refuseInvitation: refuseInvitation
       };
 
       function uploadFileS3 (data) {
@@ -339,7 +353,53 @@ angular.module('ionicDessiApp')
 
         return promise;
       }
+
+      function acceptInvitation (groupId) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        var userid = window.localStorage.getItem('userid');
+
+        $http({
+          method: 'post',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE+'api/v1/users/'+userid+'/chat/invitations/'+groupId
+        }).success(function(data) {
+          defered.resolve(data);
+        })
+          .error(function(err) {
+            defered.reject(err)
+          });
+
+        return promise;
+
+
+      }
+
+      function refuseInvitation (groupId) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        var userid = window.localStorage.getItem('userid');
+
+        $http({
+          method: 'delete',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE+'api/v1/users/'+userid+'/chat/invitations/'+groupId
+        }).success(function(data) {
+          defered.resolve(data);
+        })
+          .error(function(err) {
+            defered.reject(err)
+          });
+
+        return promise;
+
+      }
     }])
+
+  .factory('Socket', ['API_BASE', function(API_BASE) {
+    return io.connect(API_BASE);
+  }])
+
   .factory('responseHandler', ['$q', '$injector', function($q, $injector, $state) {
     var responseHandler = {
       responseError: function(response) {
@@ -357,4 +417,18 @@ angular.module('ionicDessiApp')
       }
     };
     return responseHandler;
-  }]);
+  }])
+
+  //DIRECTIVES
+  .directive('onFinishRender', function ($timeout) {
+    return {
+      restrict: 'A',
+      link: function (scope, element, attr) {
+        if (scope.$last === true) {
+          $timeout(function () {
+            scope.$emit('messageRenderCallback');
+          });
+        }
+      }
+    }
+  });;

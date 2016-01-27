@@ -60,6 +60,7 @@
           <button menu-toggle="right" class="button button-icon icon ion-android-more-horizontal"></button>
         </ion-nav-buttons>
       </ion-nav-bar>
+
       <ion-nav-view name="menuContent">
         <ion-content>
 
@@ -72,7 +73,7 @@
 
     <ion-side-menu side="left">
       <ion-header-bar class="bar-positive">
-        <h1 class="title">Menu</h1>
+        <h1 class="title">{{username}}</h1>
       </ion-header-bar>
       <ion-content>
         <ion-list>
@@ -89,14 +90,15 @@
             </div>
           </div>
           <!-- Groups -->
-          <ion-item ng-click="updateActiveGroup(0); unhideChannels(false); unhideUsers(false); clearMessages(); activeGroup = 0;" class="item-divider item-divider-principal item-icon-right">
+          <ion-item ng-click="updateActiveGroup(-1); unhideChannels(false); unhideUsers(false);" class="item-divider item-divider-principal item-icon-right">
             Groups
             <span class="icon ion-plus-circled" ng-click="showNewGroupPopup()"></span>
           </ion-item>
 
           <div class="groups" ng-show="showGroups">
             <div ng-repeat="group in groups">
-              <ion-item ng-click="updateActiveGroup($index+1); unhideChannels(true); unhideUsers(true); clearMessages();" ng-show="activeGroup === $index+1 || activeGroup === 0">
+              <ion-item ng-click="updateActiveGroup($index); unhideChannels(true); unhideUsers(true);" ng-show="activeGroup === $index || activeGroup === -1">
+                <span class="icon ion-android-contacts"> </span>
                 {{group.groupName}}
               </ion-item>
             </div>
@@ -113,8 +115,9 @@
 
           <div class="channels" ng-show="showChannels">
             <div ng-repeat="group in groups">
-              <div ng-show="activeGroup === $parent.$index+1" ng-repeat="channels in group.publicChannels">
+              <div ng-show="activeGroup === $parent.$index" ng-repeat="channels in group.publicChannels">
                 <ion-item ng-click="clearMessages(); selectChannel($index, 'public');" menu-close>
+                  <span class="icon ion-android-chat"> </span>
                   {{channels.channelName}}
                 </ion-item>
               </div>
@@ -128,8 +131,9 @@
 
           <div class="channels" ng-show="showChannels">
             <div ng-repeat="group in groups">
-              <div ng-show="activeGroup === $parent.$index+1" ng-repeat="channels in group.privateChannels">
+              <div ng-show="activeGroup === $parent.$index" ng-repeat="channels in group.privateChannels">
                 <ion-item ng-click="clearMessages(); selectChannel($index, 'private');" menu-close>
+                  <span class="icon ion-android-chat"> </span>
                   {{channels.channelName}}
                 </ion-item>
               </div>
@@ -142,10 +146,11 @@
             <span class="icon ion-plus-circled" ng-click="showInviteUserPopup()"></span>
           </ion-item>
 
-          <div class="users">
+          <div class="users" ng-show="showUsers">
             <div ng-repeat="group in groups">
-              <div ng-show="activeGroup === $parent.$index+1" ng-repeat="user in group.users">
+              <div ng-show="activeGroup === $parent.$index" ng-repeat="user in group.users">
                 <ion-item menu-close>
+                  <span class="icon ion-ios-checkmark" ng-class="users[user.id] ? 'balanced' : ''"> </span>
                   {{user.username}}
                 </ion-item>
               </div>
@@ -165,6 +170,44 @@
         </ion-list>
       </ion-content>
     </ion-side-menu>
+
+    <ion-side-menu side="right">
+      <div class="bar bar-header">
+        <label class="item item-input row">
+          <i class="icon ion-search placeholder-icon"></i>
+          <input type="search" placeholder="Search">
+        </label>
+      </div>
+      <ion-content id="rightBarContent" class="has-header">
+        <!--
+        <label class="item item-input">
+          <i class="icon ion-search placeholder-icon"></i>
+          <input type="search" placeholder="Search">
+        </label>
+        -->
+        <ion-list id="menuList" style="height:100%;">
+          <ion-item class="row" style="height: 33.3%; background-color: #343434; border-bottom-color: yellow; border-top-color: yellow;">
+            <h2 class="col col-center" style="color: white; font-size: 150%;">
+              <span class="icon ion-android-document"></span>
+              Files
+            </h2>
+          </ion-item>
+          <ion-item class="row" style="height: 33.3%; background-color: #343434; border-bottom-color: yellow; border-top-color: yellow;">
+            <h2 class="col col-center" style="color: white; font-size: 150%;">
+              <span class="icon ion-android-contact"></span>
+              Users
+            </h2>
+          </ion-item>
+          <ion-item class="row" style="height: 33.3%; background-color: #343434; border-bottom-color: yellow; border-top-color: yellow;">
+            <h2 class="col col-center" style="color: white; font-size: 150%;">
+              <span class="icon ion-gear-b"></span>
+              Settings
+            </h2>
+          </ion-item>
+        </ion-list>
+      </ion-content>
+    </ion-side-menu>
+
   </ion-side-menus>
 
 </ion-view>

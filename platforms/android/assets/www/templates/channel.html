@@ -15,10 +15,36 @@
 </ion-view>
 -->
 <ion-view>
-  <ion-content class="padding">
-    <div id="cardList" lass="list card">
+  <ion-header-bar class="bar-subheader bar-stable" ng-show="activeGroup !== -1">
+    <h5 class="title">
+      <span class="icon ion-android-contacts"> </span>
+      {{groups[activeGroup].groupName}} >
+      <span class="icon ion-android-chat"> </span>
+      {{activeChannel.channelName || '...'}}</h5>
+  </ion-header-bar>
+  <ion-content id="messageContent" class=" has-subheader padding" delegate-handle="messageScroll">
 
+    <div id="cardList" class="list">
+        <div class="list card"  ng-repeat="message in messagess" on-finish-render="messageRenderCallback">
+          <div class="item item-avatar">
+            <img
+              ng-src="http://placehold.it/50/{{(window.localStorage.getItem('userid')!=message.user.id)?'55C1E7':'FA6F57'}}/fff&text={{message.user.username | limitTo:2 | uppercase }}"
+              alt="User Avatar" class="img-circle"/>
+            <h2>
+              <strong>
+                @{{message.user.username}}
+              </strong>
+            </h2>
+            <small>
+              <span am-time-ago="message.date"></span>
+            </small>
+          </div>
+          <div class="item item-text-wrap">
+            {{message.text}}
+          </div>
+        </div>
     </div>
+
   </ion-content>
   <!--
   <ion-footer-bar align-title="left" class="bar-stable">
@@ -43,7 +69,7 @@
       <input type="text" placeholder="Message" ng-model="text">
     </label>
     <button class="button button-clear button-positive" ng-click="sendText(text); text='';">
-      <strong>send</strong>
+      <strong>Send</strong>
     </button>
   </ion-footer-bar>
   <!--

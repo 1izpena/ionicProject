@@ -1,6 +1,6 @@
 angular.module('ionicDessiApp.controllers', [])
 
-.controller('AppCtrl', function($scope, $ionicModal, $timeout, $state, LoginService, SignupService, $ionicPopup, ResetService, $stateParams) {
+.controller('AppCtrl', function($scope, $ionicModal, $timeout, $state, LoginService, SignupService, $ionicPopup, ResetService, $stateParams, $ionicLoading) {
 
   // With the new view caching in Ionic, Controllers are only called
   // when they are recreated or on app start, instead of every page change.
@@ -10,7 +10,7 @@ angular.module('ionicDessiApp.controllers', [])
   //});
 
     if($stateParams.message !== null){
-      showToast($stateParams.message);
+      showToast($stateParams.message, $ionicLoading);
     }
 
     if(LoginService.isLogged()){
@@ -143,23 +143,37 @@ angular.module('ionicDessiApp.controllers', [])
 
 })
 
-.controller('ChatCtrl', function($scope, $state, GroupsService, ChatService, $ionicPopup) {
+.controller('ChatCtrl', function($scope, $state, GroupsService, ChatService, $ionicPopup, Socket, $ionicScrollDelegate) {
 
+  $scope.username = window.localStorage.getItem('username');
   $scope.showGroups = true;
   $scope.showChannels = false;
   $scope.showUsers = false;
   $scope.showInvitations = false;
   $scope.groups = 0;
-  $scope.messages = null;
-  $scope.activeGroup = 0;
+  $scope.messagess = [];
+  $scope.activeGroup = -1;
   $scope.activeChannel = null;
+  $scope.users = {};
+
+  // Emitimos evento de conexion a chat para recibir nuevas invitaciones a grupos
+  Socket.emit('newChatConnection', {'userid':window.localStorage.getItem('userid')});
 
   $scope.updateActiveGroup = function(i) {
     $scope.activeGroup = i;
-  }
+    if(i !== -1) {
+      // Emitimos evento de selecion de grupo para notificaciones de usuarios coenctados al grupo
+      Socket.emit('selectGroup', {
+        'groupid': $scope.groups[$scope.activeGroup].id,
+        'userid': window.localStorage.getItem('userid')
+      });
+    }
+    $scope.messagess = [];
+  };
 
   GroupsService.getChatInfo().then(function (data) {
       $scope.groups = data;
+      createConnectedUserList();
     }
     , function (err) {
       // Tratar el error
@@ -174,6 +188,16 @@ angular.module('ionicDessiApp.controllers', [])
       }
 
   });
+
+  function createConnectedUserList(){
+    var tempList = {};
+    for(var i = 0 ; i<$scope.groups.length ; i++){
+      for(var j = 0 ; j<$scope.groups[i].users.length ; j++) {
+        tempList[$scope.groups[i].users[j].id] = false;
+      }
+    }
+    $scope.users = tempList;
+  }
 
   ChatService.getInvitations().then(function (data) {
       $scope.invitations = data;
@@ -213,57 +237,86 @@ angular.module('ionicDessiApp.controllers', [])
 
   $scope.selectChannel = function(index, type){
     if(type === 'private') {
-      $scope.activeChannel = $scope.groups[$scope.activeGroup - 1].privateChannels[index];
+      $scope.activeChannel = $scope.groups[$scope.activeGroup].privateChannels[index]
+      // Emitimos evento de selecion de canal para recibir nuevos mensajes
+      Socket.emit('selectChannel', { 'channelid': $scope.groups[$scope.activeGroup].privateChannels[index].id } );
     } else {
-      $scope.activeChannel = $scope.groups[$scope.activeGroup - 1].publicChannels[index];
+      $scope.activeChannel = $scope.groups[$scope.activeGroup].publicChannels[index];
+      // Emitimos evento de selecion de canal para recibir nuevos mensajes
+      Socket.emit('selectChannel', { 'channelid': $scope.groups[$scope.activeGroup].publicChannels[index].id } );
     }
-    getMessages($scope.activeGroup - 1, index, type);
+    getMessages($scope.activeGroup, index, type);
   }
 
   function getMessages(groupindex, channelindex, type) {
+
     if(type === 'public'){
       ChatService.getMessages($scope.groups[groupindex].id, $scope.groups[groupindex].publicChannels[channelindex]).then(function(data){
-        $scope.messages = data;
-        addMessages(data);
+        $scope.messagess = data.data;
+
+        //addMessages(data);
       });
     } else {
       ChatService.getMessages($scope.groups[groupindex].id, $scope.groups[groupindex].privateChannels[channelindex]).then(function (data) {
-        $scope.messages = data;
+        $scope.messagess = data.data;
+        //addMessages(data);
       });
     }
+
   }
+
+  $scope.$on('messageRenderCallback', function(messageRenderCallbackEvent) {
+    $ionicScrollDelegate.$getByHandle('messageScroll').scrollBottom(true);
+  });
 
   function addMessages(messages) {
     for(var i = 0; i<messages.data.length; i++) {
+      var messageContainer = document.createElement('div');
+      messageContainer.classList.add('list');
+      messageContainer.classList.add('card');
       var newMessage = document.createElement('div');
       newMessage.classList.add('item');
       newMessage.classList.add('item-text-wrap');
       var messageText = document.createTextNode(messages.data[i].user.username+': '+messages.data[i].text);
       newMessage.appendChild(messageText);
-      document.getElementById('cardList').appendChild(newMessage);
+      messageContainer.appendChild(newMessage);
+      document.getElementById('cardList').appendChild(messageContainer);
+
+      //cotenedor titulo
+      var titleItem = document.createElement('div');
+      titleItem.classList.add('item');
+      titleItem.classList.add('item-text-wrap');
+      var messageTextTitle = document.createTextNode(messages.data[i].user.username+': '+messages.data[i].text);
+      var subtitle = document.createElement('p');
+      var messageTextSubtitle = document.createTextNode(messages.data[i].user.username+': '+messages.data[i].text);
     }
   }
 
   function addMessage(message) {
+    /*
     var newMessage = document.createElement('div');
     newMessage.classList.add('item');
     newMessage.classList.add('item-text-wrap');
     var messageText = document.createTextNode(window.localStorage.getItem('username')+': '+message);
     newMessage.appendChild(messageText);
     document.getElementById('cardList').appendChild(newMessage);
+    */
   }
 
   $scope.sendText = function (text) {
 
-    addMessage(text);
+    //addMessage(text);
+
 
     var data = {
       userid: window.localStorage.getItem('userid'),
-      groupid: $scope.groups[$scope.activeGroup - 1].id,
+      groupid: $scope.groups[$scope.activeGroup].id,
       channelid: $scope.activeChannel.id,
       text: text,
       messageType: 'TEXT'
     };
+
+    //$scope.messagess.push(data);
 
     ChatService.postMessage(data).then(
       function (result) {
@@ -276,15 +329,17 @@ angular.module('ionicDessiApp.controllers', [])
       }
     );
   }
-
+/*
   $scope.clearMessages = function() {
     var div = document.getElementById('cardList');
-    while (div.firstChild) {
-      div.removeChild(div.firstChild);
+    if (div) {
+      while (div.firstChild) {
+        div.removeChild(div.firstChild);
+      }
+      $scope.activeChannel = null;
     }
-    $scope.activeChannel = null;
   }
-
+*/
   $scope.showNewChannelPopup = function(type) {
     $scope.newChannel = {};
 
@@ -302,12 +357,12 @@ angular.module('ionicDessiApp.controllers', [])
               showErrorAlert('Channel name is required');
             } else {
               $scope.newChannel.channelType = type;
-              GroupsService.createNewChannel($scope.groups[$scope.activeGroup - 1].id, $scope.newChannel).then(
+              GroupsService.createNewChannel($scope.groups[$scope.activeGroup].id, $scope.newChannel).then(
                 function(data) {
                   if(type === 'PUBLIC') {
-                    $scope.groups[$scope.activeGroup - 1].publicChannels[$scope.groups[$scope.activeGroup - 1].publicChannels.length] = data.data;
+                    $scope.groups[$scope.activeGroup].publicChannels[$scope.groups[$scope.activeGroup].publicChannels.length] = data.data;
                   } else {
-                    $scope.groups[$scope.activeGroup - 1].privateChannels[$scope.groups[$scope.activeGroup - 1].privateChannels.length] = data.data;
+                    $scope.groups[$scope.activeGroup].privateChannels[$scope.groups[$scope.activeGroup].privateChannels.length] = data.data;
                   }
                 },function(err){
                   // Tratar el error
@@ -389,12 +444,177 @@ angular.module('ionicDessiApp.controllers', [])
     });
   }
 
-})
+  //Gestion de recepcion de sockets
 
-.controller('PlaylistCtrl', function($scope, $stateParams) {
+    Socket.on('newMessage', function (data) {
+      $scope.messagess.push(data);
+      $scope.$apply();
+    });
+
+    Socket.on('newUserConnect', function (data) {
+      console.log ("newUserConnect: ");
+      updateConnectedUser(data.userid);
+      $scope.$apply();
+    });
+
+    function updateConnectedUser(userid){
+      $scope.users[userid] = true;
+    }
+
+    Socket.on('usersConnected', function (data) {
+      console.log ("usersConnected: ");
+      console.log (data);
+      if (data.users) {
+        for (var i = 0; i < data.users.length; i++) {
+          $scope.users[data.users[i]] = true;
+        }
+        $scope.$apply();
+      }
+    });
+
+    Socket.on('userDisconnect', function (data) {
+      delete $scope.users[data.userid];
+      $scope.$apply();
+    });
+
+
+    //recibir evento de invitación a grupo
+    Socket.on('newGroupInvitation', function (data) {
+      console.log ("newGroupInvitation received from server");
+      console.log(data);
+      $scope.invitations.push(data);
+      $scope.$apply();
+    });
+
+    //recibir evento de nuevo canal publico en grupo
+    Socket.on('newPublicChannel', function (data) {
+      console.log ("newPublicChannel received from server");
+      console.log(data);
+      $scope.publicChannels.push(data);
+      $scope.$apply();
+    });
+
+    //recibir evento de nuevo canal privado en grupo
+    Socket.on('newPrivateChannel', function (data) {
+      console.log ("newPrivateChannel receive from server");
+      console.log(data);
+      $scope.privateChannels.push(data);
+      $scope.$apply();
+    });
+
+    //recibir evento de nuevo usuario en grupo
+    Socket.on('newMemberInGroup', function (data) {
+      console.log ("newMemberInGroup receive from server");
+      console.log(data);
+      $scope.members.push(data);
+      $scope.$apply();
+    });
+
+    //recibir evento de usuario eliminado de grupo
+    Socket.on('deletedMemberInGroup', function (data) {
+      console.log ("deletedMemberInGroup receive from server");
+      console.log(data);
+      for (i=0;i<$scope.members.length;i++){
+        if ($scope.members[i].id == data.id){
+          $scope.members.splice(i,1);
+          $scope.$apply();
+        }
+      }
+    });
+
+    //recibir evento de nuevo usuario en canal
+    Socket.on('newMemberInChannel', function (data) {
+      console.log ("newMemberInChannel receive from server");
+      console.log(data);
+      $scope.channelMembers.push(data);
+      $scope.$apply();
+    });
+
+    //recibir evento de usuario eliminado de canal
+    Socket.on('deletedMemberInChannel', function (data) {
+      console.log ("deletedMemberInChannel receive from server");
+      console.log(data);
+      for (var i=0;i<$scope.channelMembers.length;i++){
+        if ($scope.channelMembers[i].id == data.id){
+          $scope.channelMembers.splice(i,1);
+          $scope.$apply();
+        }
+      }
+    });
+
+    //recibir evento de nombre de grupo editado
+    Socket.on('editedGroup', function (data) {
+      console.log ("editedGroup receive from server");
+      console.log(data);
+      for (var i=0;i<$scope.groups.length;i++){
+        if ($scope.groups[i].id == data.id){
+          $scope.groups[i].groupname = data.groupname;
+          $scope.$apply();
+        }
+      }
+    });
+
+    //recibir evento de nombre de canal publico editado
+    Socket.on('editedPublicChannel', function (data) {
+      console.log ("editedPublicChannel receive from server");
+      console.log(data);
+      for (var i=0;i<$scope.publicChannels.length;i++){
+        if ($scope.publicChannels[i].id == data.id){
+          $scope.publicChannels[i].channelName = data.channelName;
+          $scope.$apply();
+        }
+      }
+    });
+
+    //recibir evento de nombre de canal privado editado
+    Socket.on('editedPrivateChannel', function (data) {
+      console.log ("editedPrivateChannel receive from server");
+      console.log(data);
+      for (var i=0;i<$scope.privateChannels.length;i++){
+        if ($scope.privateChannels[i].id == data.id){
+          $scope.privateChannels[i].channelName = data.channelName;
+          $scope.$apply();
+        }
+      }
+    });
+
+    //recibir evento de canal privado eliminado
+    Socket.on('deletedPrivateChannel', function (data) {
+      console.log ("deletedPrivateChannelInGroup receive from server");
+      console.log(data);
+      for (var i=0;i<$scope.privateChannels.length;i++){
+        if ($scope.privateChannels[i].id == data){
+          $scope.privateChannels.splice(i,1);
+          $scope.$apply();
+        }
+      }
+    });
+
+    //recibir evento de canal publico eliminado
+    Socket.on('deletedPublicChannel', function (data) {
+      console.log ("deletedPublicChannelInGroup receive from server");
+      for (var i=0;i<$scope.publicChannels.length;i++){
+        if ($scope.publicChannels[i].id == data){
+          $scope.publicChannels.splice(i,1);
+          $scope.$apply();
+        }
+      }
+    });
+
+    //recibir evento de grupo eliminado
+    Socket.on('deletedGroup', function (data) {
+      console.log ("deletedGroup receive from server");
+      for (var i=0;i<$scope.groups.length;i++){
+        if ($scope.groups[i].id == data){
+          $scope.groups[i].splice(i,1);
+          $scope.$apply();
+        }
+      }
+    });
+
 });
 
-function showToast(message) {
+function showToast(message, $ionicLoading) {
   if (window.plugins && window.plugins.toast) {
     window.plugins.toast.showShortCenter(message);
   }

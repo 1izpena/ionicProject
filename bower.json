@@ -3,5 +3,13 @@
   "private": "true",
   "devDependencies": {
     "ionic": "driftyco/ionic-bower#1.1.1"
+  },
+  "dependencies": {
+    "socket.io-client": "~1.4.4",
+    "angular-moment": "~0.10.3",
+    "moment": "~2.11.1"
+  },
+  "resolutions": {
+    "moment": ">=2.8.0 <2.11.0"
   }
 }

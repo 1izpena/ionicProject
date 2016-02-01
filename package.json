@@ -20,7 +20,8 @@
     {
       "locator": "https://github.com/EddyVerbruggen/Toast-PhoneGap-Plugin",
       "id": "cordova-plugin-x-toast"
-    }
+    },
+    "cordova-plugin-camera"
   ],
   "cordovaPlatforms": [
     "ios",

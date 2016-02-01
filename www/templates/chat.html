@@ -78,16 +78,17 @@
       <ion-content>
         <ion-list>
           <!-- Invitations -->
-          <ion-item class="item-divider item-icon-right item-energized" ng-show="invitations.length > 0">
+          <ion-item class="item-divider item-icon-right item-energized" ng-show="invitations.length > 0" ng-click="toggleInvitations()">
             Invitations
           </ion-item>
 
-          <div class="invitations" ng-show="invitations.length > 0">
+          <div class="invitations" ng-show="showInvitations">
             <div ng-repeat="invitation in invitations">
-              <ion-item class="item-icon-right">
+              <ion-item>
+                <span class="icon ion-alert-circled"> </span>
                 {{invitation.groupname}}
-                <ion-option-button class="button-balanced" ng-click="acceptInvitation(invitation)">Yes</ion-option-button>
-                <ion-option-button class="button-assertive" ng-click="refuseInvitation(invitation)">No</ion-option-button>
+                <ion-option-button class="button-balanced" ng-click="acceptInvitation(invitation, $index)">Yes</ion-option-button>
+                <ion-option-button class="button-assertive" ng-click="refuseInvitation(invitation, $index)">No</ion-option-button>
               </ion-item>
             </div>
           </div>
@@ -145,13 +146,16 @@
           <!-- Users -->
           <ion-item class="item-divider item-divider-principal item-icon-right" ng-show="showUsers">
             Users
+            <!--
             <span class="icon ion-plus-circled" ng-click="showInviteUserPopup()"></span>
+            -->
+            <span class="icon ion-plus-circled" ng-click="search()"></span>
           </ion-item>
 
           <div class="users" ng-show="showUsers">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index" ng-repeat="user in group.users">
-                <ion-item menu-close>
+                <ion-item ng-click="searchDirectChannel(user)" ng-show="user.id != userid" menu-close>
                   <span class="icon ion-ios-checkmark" ng-class="users[user.id] ? 'balanced' : ''"> </span>
                   {{user.username}}
                 </ion-item>

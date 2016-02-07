@@ -4,7 +4,7 @@
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
 // 'starter.controllers' is found in controllers.js
-angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDessiApp.config', 'ngAnimate', 'angularMoment'])
+angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDessiApp.config', 'ngAnimate', 'angularMoment', 'ngSanitize', 'textAngular', 'ngTagsInput'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
@@ -45,6 +45,44 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
         'menuContent': {
           templateUrl: 'templates/channel.html'
         }
+      }
+    })
+    .state('forum', {
+      url: '/forum',
+      templateUrl: 'templates/forum.html',
+      controller: 'ForumCtrl',
+      abstract: true
+    })
+    .state('forum.latest', {
+      url: "/latest",
+      views: {
+        'latest-tab': {
+          templateUrl: "templates/latest.html"
+        }
+      }
+    })
+    .state('forum.mostViewed', {
+      url: "/mostviewed",
+      views: {
+        'mostViewed-tab': {
+          templateUrl: "templates/mostViewed.html"
+        }
+      }
+    })
+    .state('forum.mostVoted', {
+      url: "/mostvoted",
+      views: {
+        'mostVoted-tab': {
+          templateUrl: "templates/mostVoted.html"
+        }
+      }
+    })
+    .state('questionDetail', {
+      url: "/forum/question/detail",
+      templateUrl: 'templates/questionDetail.html',
+      controller: 'DetailCtrl',
+      params: {
+        id: null
       }
     });
   // if none of the above states are matched, use this as the fallback

@@ -89,7 +89,12 @@ angular.module('ionicDessiApp')
       inviteUserToGroup : inviteUserToGroup,
       removeUserFromGroup : removeUserFromGroup,
       unsuscribeFromGroup : unsuscribeFromGroup,
-      deleteGroup : deleteGroup
+      deleteGroup : deleteGroup,
+      editChannel: editChannel,
+      addUserToChannel: addUserToChannel,
+      deleteUserFromChannel: deleteUserFromChannel,
+      unsubscribeFromChannel: unsubscribeFromChannel,
+      deleteChannel: deleteChannel
     };
 
     function getChatInfo () {
@@ -356,7 +361,7 @@ angular.module('ionicDessiApp')
       $http({
         method: 'post',
         headers: {'x-access-token': window.localStorage.getItem('token'), 'Content-Type': 'application/x-www-form-urlencoded'},
-        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+group.id+'/users/'+user.id
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+group.id+'/users/'+user.id+'/invite'
       }).then(
         function(response) {
           defered.resolve(response);
@@ -428,6 +433,106 @@ angular.module('ionicDessiApp')
 
       return promise;
     };
+
+    function editChannel (groupid,channelid,data) {
+      var defered = $q.defer();
+      var promise = defered.promise;
+      var userid = window.localStorage.getItem('userid');
+      $http({
+        method: 'put',
+        headers: {'x-access-token': window.localStorage.getItem('token')},
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid,
+        data: data
+      }).then(
+        function(response) {
+          defered.resolve(response);
+        },
+        function(error){
+          defered.reject(error);
+        }
+      );
+      return promise;
+    }
+
+    function addUserToChannel (groupid,channelid,userAdd) {
+      var defered = $q.defer();
+      var promise = defered.promise;
+      var userid = window.localStorage.getItem('userid');
+      var userid1 = userAdd;
+      $http({
+        method: 'post',
+        headers: {'x-access-token': window.localStorage.getItem('token')},
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid+'/users/'+userid1,
+        data: ''
+      }).then(
+        function(response) {
+          defered.resolve(response);
+        },
+        function(error){
+          defered.reject(error);
+        }
+      );
+      return promise;
+    }
+
+    function deleteUserFromChannel (groupid,channelid,data) {
+      var defered = $q.defer();
+      var promise = defered.promise;
+      var userid = window.localStorage.getItem('userid');
+      var userid1 = data;
+      $http({
+        method: 'delete',
+        headers: {'x-access-token': window.localStorage.getItem('token')},
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid+'/users/'+userid1,
+        data: data
+      }).then(
+        function(response) {
+          defered.resolve(response);
+        },
+        function(error){
+          defered.reject(error);
+        }
+      );
+      return promise;
+    }
+
+    function unsubscribeFromChannel (groupid,channelid) {
+      var defered = $q.defer();
+      var promise = defered.promise;
+      var userid = window.localStorage.getItem('userid');
+      $http({
+        method: 'delete',
+        headers: {'x-access-token': window.localStorage.getItem('token')},
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid+'/unsuscribe/'
+      }).then(
+        function(response) {
+          defered.resolve(response);
+        },
+        function(error){
+          defered.reject(error);
+        }
+      );
+      return promise;
+    }
+
+    function deleteChannel (groupid,channelid) {
+      var defered = $q.defer();
+      var promise = defered.promise;
+      var userid = window.localStorage.getItem('userid');
+      $http({
+        method: 'delete',
+        headers: {'x-access-token': window.localStorage.getItem('token')},
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid
+      }).then(
+        function(response) {
+          defered.resolve(response);
+        },
+        function(error){
+          defered.reject(error);
+        }
+      );
+      return promise;
+    }
 
   }])
 

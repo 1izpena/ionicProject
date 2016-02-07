@@ -361,7 +361,7 @@ angular.module('ionicDessiApp')
       $http({
         method: 'post',
         headers: {'x-access-token': window.localStorage.getItem('token'), 'Content-Type': 'application/x-www-form-urlencoded'},
-        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+group.id+'/users/'+user.id
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+group.id+'/users/'+user.id+'/invite'
       }).then(
         function(response) {
           defered.resolve(response);
@@ -711,6 +711,289 @@ angular.module('ionicDessiApp')
 
     }])
 
+  //FORO
+  .service('ForumService', ['$http','$q', 'API_BASE',
+    function($http, $q,API_BASE){
+
+      return{
+        getQuestions: getQuestions,
+        createQuestion: createQuestion,
+        getQuestion: getQuestion,
+        commentQuestion: commentQuestion,
+        questionUpVote: questionUpVote,
+        questionDownVote: questionDownVote,
+        getTags: getTags,
+        newAnswer: newAnswer,
+        answerUpVote: answerUpVote,
+        answerDownVote: answerDownVote,
+        commentAnswer: commentAnswer,
+        deleteAnswer: deleteAnswer
+      };
+
+      function getQuestions() {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        $http({
+          method: 'get',
+          url: API_BASE + 'api/v1/forum/questions',
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+
+      function createQuestion(data)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        var nowDate = new Date().getTime();
+        $http({
+          method: 'post',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/forum/question/',
+          data:{
+            "title" : data.title,
+            "body"  : data.body,
+            "created": nowDate,
+            "answercount" : 0,
+            "votes" : 0,
+            "views" : 0,
+            "tags":  data.tags
+          }
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+      function getQuestion(questionId)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        $http({
+          method: 'get',
+          url: API_BASE + 'api/v1/forum/question/'+ questionId,
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+      function commentQuestion(questionId, data)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        var nowDate = new Date().getTime();
+        $http({
+          method: 'put',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/forum/question/'+ questionId+ "/comment",
+          data: {
+            'comment': data,
+            'questionid': questionId,
+            'created': nowDate,
+          }
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+      function questionUpVote(questionId)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        $http({
+          method: 'put',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/forum/question/'+ questionId+ "/upvote",
+          data:{
+            "questionid": questionId,
+            "vote": 1
+          }
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+      function questionDownVote(questionId)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        $http({
+          method: 'put',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/forum/question/'+ questionId+ "/downvote",
+          data:{
+            "questionid": questionId,
+            "vote": -1
+          }
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+
+
+      function getTags()
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        $http({
+          method: 'get',
+          url: API_BASE + 'api/v1/forum/tags',
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+
+      function newAnswer(questionId,data)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        var nowDate = new Date().getTime();
+        $http({
+          method: 'post',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/forum/question/'+ questionId+ "/answer",
+          data:{
+            "body"      : data.body,
+            "created"   : nowDate,
+            "votes"     : 0
+          }
+        }).then(
+          function(response){
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+
+      function commentAnswer(questionid,answerid,data)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        var nowDate = new Date().getTime();
+        $http({
+          method: 'put',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/forum/question/'+ questionid+ "/answer/"+ answerid+'/comment',
+          data:{
+            "comment"      : data,
+            "created"   : nowDate,
+          }
+        }).then(
+          function(response){
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+
+      function answerUpVote(questionId,answerId)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        $http({
+          method: 'put',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/forum/question/'+ questionId+ "/answer/"+answerId+'/upvote',
+          data:{
+            "vote"      : 1,
+          }
+        }).then(
+          function(response){
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+
+      function answerDownVote(questionId,answerId)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        $http({
+          method: 'put',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/forum/question/'+ questionId+ "/answer/"+answerId+'/downvote',
+          data:{
+            "vote"      : -1,
+          }
+        }).then(
+          function(response){
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+
+      function deleteAnswer(questionId,answerId)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        $http({
+          method: 'delete',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/forum/question/'+ questionId+ "/answer/"+answerId+'/delete',
+        }).then(
+          function(response){
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+
+    }])
+
   .factory('Socket', ['API_BASE', function(API_BASE) {
     return io.connect(API_BASE);
   }])
@@ -746,4 +1029,4 @@ angular.module('ionicDessiApp')
         }
       }
     }
-  });;
+  });

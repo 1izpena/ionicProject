@@ -253,3 +253,110 @@ and (orientation: portrait) {
 .has-error {
   border-bottom: 1px solid red;
 }
+
+
+/* FORO */
+
+.questiontitle {
+  text-transform: uppercase;
+}
+
+a {
+  color: #337ab7;
+  text-decoration: none;
+}
+
+.votesPrincipal, .answers, .views {
+  display: inline-block;
+  margin: 0 2px;
+}
+
+p {
+  font-family: lora;
+  font-size: 1.1em;
+}
+
+.time {
+  text-align: right;
+}
+
+.time span {
+  padding: 2px;
+}
+.pull-right {
+  float: right !important;
+}
+.text-muted {
+  color: #777;
+}
+
+.tags {
+  line-height: 18px;
+  width: 100%;
+  text-align: left;
+}
+
+.tags a {
+  border: 1px solid #e1ecf4;
+  display: inline-block;
+  margin: 2px 2px 2px 0;
+}
+
+.tags a:hover,.questiontitle a:hover
+{
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.label-info {
+  background-color: #5bc0de;
+}
+
+.label {
+  display: inline;
+  padding: .2em .6em .3em;
+  font-size: 75%;
+  font-weight: bold;
+  line-height: 1;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: baseline;
+  border-radius: .25em;
+}
+
+/* Question detail */
+.votes {
+  font-size: 1.5rem;
+  text-align: center;
+  width: 100%;
+  display: inline-block;
+  margin: 0 2px;
+}
+
+.votesButton {
+  width: 100%;
+}
+
+.answer {
+  border-bottom: 1px solid #ddd;
+}
+
+.ta-bind {
+  border: 1px solid #dddddd;
+  border-radius: 5px;
+}
+
+.ta-toolbar {
+  text-align: center;
+}
+/*
+html,body{
+  -webkit-user-select: none;
+  -webkit-touch-callout: none !important;
+}
+*/
+*[contenteditable] {
+  -webkit-user-select: text !important;
+}
+

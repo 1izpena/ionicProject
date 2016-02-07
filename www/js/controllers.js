@@ -732,9 +732,11 @@ angular.module('ionicDessiApp.controllers', [])
 
     $scope.isInGroup = function(user) {
       var tempUsers = $scope.groups[$scope.activeGroup].users;
-      for(var i = 0 ; i<tempUsers.length ; i++){
-        if(tempUsers[i].id === user.id){
-          return true;
+      if(tempUsers !== undefined) {
+        for (var i = 0; i < tempUsers.length; i++) {
+          if (tempUsers[i].id === user.id) {
+            return true;
+          }
         }
       }
       return false;
@@ -807,7 +809,7 @@ angular.module('ionicDessiApp.controllers', [])
     });
 
     Socket.on('userDisconnect', function (data) {
-      delete $scope.users[data.userid];
+      $scope.users[data.userid] = false;
       $scope.$apply();
     });
 
@@ -850,6 +852,7 @@ angular.module('ionicDessiApp.controllers', [])
           break;
         }
       }
+      $scope.$apply();
     });
 
     //recibir evento de nuevo usuario en canal
@@ -873,15 +876,9 @@ angular.module('ionicDessiApp.controllers', [])
     });
 
     //recibir evento de nombre de grupo editado
-    Socket.on('editedGroup', function (data) {
-      console.log("editedGroup receive from server");
-      console.log(data);
-      for (var i = 0; i < $scope.groups.length; i++) {
-        if ($scope.groups[i].id == data.id) {
-          $scope.groups[i].groupname = data.groupname;
-          $scope.$apply();
-        }
-      }
+    Socket.on('editedGroupName', function (data) {
+      $scope.groups[$scope.activeGroup] = data;
+      $scope.$apply();
     });
 
     //recibir evento de nombre de canal publico editado
@@ -941,6 +938,328 @@ angular.module('ionicDessiApp.controllers', [])
         }
       }
     });
+
+    //Forum
+
+    $scope.goToForum = function() {
+      $state.go('forum.latest');
+    };
+
+  })
+
+  .controller('ForumCtrl', function ($scope, ForumService, $sce, $stateParams, $ionicModal, $ionicPopup, LoginService, $state) {
+
+    $scope.questions = null;
+    $scope.activeQuestion = null;
+    $scope.activeQuestionIndex = -1;
+
+    $scope.goToDetail = function(questionid){
+      $state.go('questionDetail',{id:questionid}).then();
+    };
+
+    /*Obtener lista de preguntas*/
+    $scope.getQuestions = function() {
+      ForumService.getQuestions().then(function (res){
+        $scope.questions = res.data;
+      },function(err){
+        $scope.error = err.data.message;
+      });
+    };
+
+    $scope.trustAsHtml = function(string) {
+      return $sce.trustAsHtml(string);
+    };
+
+    //NEW QUESTION MODAL
+
+    $ionicModal.fromTemplateUrl('templates/newQuestion.html', {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function (modal) {
+      $scope.newquestionmodal = modal;
+    });
+
+    // Triggered in the login modal to close it
+    $scope.closeNewQuestion = function () {
+      $scope.newquestionmodal.hide();
+    };
+
+    // Open the login modal
+    $scope.newQuestion = function () {
+      if(window.localStorage.getItem('token') != undefined) {
+        $scope.newquestionmodal.show();
+      } else {
+        $scope.login();
+      }
+    };
+
+    $scope.doNewQuestion = function (newquestion) {
+
+      ForumService.createQuestion(newquestion).then(
+        function(data){
+          $scope.questions.push(data.data);
+          $scope.closeNewQuestion();
+        }, function(err){
+          $scope.closeNewQuestion();
+          showErrorAlert(err.data.message);
+        }
+      );
+
+    };
+
+    //LOGIN MODAL
+
+    $ionicModal.fromTemplateUrl('templates/login.html', {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function (modal) {
+      $scope.loginmodal = modal;
+    });
+
+    // Triggered in the login modal to close it
+    $scope.closeLogin = function () {
+      $scope.loginmodal.hide();
+    };
+
+    // Open the login modal
+    $scope.login = function () {
+      $scope.loginmodal.show();
+    };
+
+    // Perform the login action when the user submits the login form
+    $scope.doLogin = function (user) {
+
+      $scope.message = '';
+      $scope.error = 0;
+      if (user.mail && user.password) {
+        LoginService.login(user).then(function (res) {
+          window.localStorage.setItem('username', res.data.username);
+          window.localStorage.setItem('token', res.data.token);
+          window.localStorage.setItem('userid', res.data.id);
+          $scope.loginmodal.hide();
+        }, function (res) {
+          showAlert(res.data.message);
+        });
+      }
+
+    };
+
+    function showErrorAlert(message) {
+      var alertPopup = $ionicPopup.alert({
+        title: 'Error!',
+        template: message
+      });
+    }
+
+      $scope.getQuestions();
+
+  })
+
+  .controller('DetailCtrl', function ($scope, ForumService, $sce, $stateParams, $ionicModal, $ionicPopup, LoginService, $state) {
+
+    $scope.activeQuestion = null;
+    $scope.activeAnswerIndex = null;
+    $scope.showQuestionComments = false;
+    $scope.showAnswerComments = false;
+
+    $scope.gotoForum = function(){
+      $state.go('forum.latest');
+    }
+
+    $scope.getQuestion = function()
+    {
+      ForumService.getQuestion($stateParams.id).then(function (res){
+        $scope.activeQuestion = res.data;
+      },function(err){
+        showErrorAlert(err.data.message);
+      });
+    };
+
+
+    $scope.trustAsHtml = function(string) {
+      return $sce.trustAsHtml(string);
+    };
+
+    //VOTES
+
+    $scope.questionUpVote = function(){
+      if(window.localStorage.getItem('token') != undefined) {
+        ForumService.questionUpVote($scope.activeQuestion._id).then(
+          function (data) {
+            $scope.activeQuestion.votes = parseInt($scope.activeQuestion.votes) + 1;
+          }, function (err) {
+            showErrorAlert(err.data.message);
+          }
+        );
+      } else {
+        $scope.login();
+      }
+    };
+
+    $scope.questionDownVote = function(){
+      if(window.localStorage.getItem('token') != undefined) {
+        ForumService.questionDownVote($scope.activeQuestion._id).then(
+          function (data) {
+            $scope.activeQuestion.votes = parseInt($scope.activeQuestion.votes) - 1;
+          }, function (err) {
+            showErrorAlert(err.data.message);
+          }
+        );
+      } else {
+        $scope.login();
+      }
+    };
+
+    $scope.answerUpVote = function(index, answerid){
+      if(window.localStorage.getItem('token') != undefined) {
+        $scope.activeAnswerIndex = index;
+        ForumService.answerUpVote($scope.activeQuestion._id, answerid).then(
+          function (data) {
+            $scope.activeQuestion.answers[$scope.activeAnswerIndex].votes = parseInt($scope.activeQuestion.answers[$scope.activeAnswerIndex].votes) + 1;
+          }, function (err) {
+            showErrorAlert(err.data.message);
+          }
+        );
+      } else {
+        $scope.login();
+      }
+    };
+
+    $scope.answerDownVote = function(index, answerid){
+      if(window.localStorage.getItem('token') != undefined) {
+        $scope.activeAnswerIndex = index;
+        ForumService.answerDownVote($scope.activeQuestion._id, answerid).then(
+          function (data) {
+            $scope.activeQuestion.answers[$scope.activeAnswerIndex].votes = parseInt($scope.activeQuestion.answers[$scope.activeAnswerIndex].votes) - 1;
+          }, function (err) {
+            showErrorAlert(err.data.message);
+          }
+        );
+      } else {
+        $scope.login();
+      }
+    };
+
+    //COMMENTS
+
+    $scope.commentQuestion = function (comment) {
+      if(window.localStorage.getItem('token') != undefined) {
+        ForumService.commentQuestion($scope.activeQuestion._id, comment).then(
+          function (data) {
+            $scope.activeQuestion.comments = data.data.comments;
+            for(var i = 0 ; i<document.getElementsByClassName('questionArea').length ; i++){
+              document.getElementsByClassName('questionArea')[i].value = '';
+            }
+          }, function (err) {
+            showErrorAlert(err.data.message);
+          }
+        );
+      } else {
+        $scope.login();
+      }
+    };
+
+    $scope.commentAnswer = function(index, answerid, comment){
+      if(window.localStorage.getItem('token') != undefined) {
+        $scope.activeAnswerIndex = index;
+        ForumService.commentAnswer($scope.activeQuestion._id, answerid, comment).then(
+          function (data) {
+            $scope.activeQuestion.answers[$scope.activeAnswerIndex].comments = data.data;
+            for(var i = 0 ; i<document.getElementsByClassName('answerArea').length ; i++){
+              document.getElementsByClassName('answerArea')[i].value = '';
+            }
+          }, function (err) {
+            showErrorAlert(err.data.message);
+          }
+        );
+      } else {
+        $scope.login();
+      }
+    };
+
+    //ANSWER MODAL
+
+    $ionicModal.fromTemplateUrl('templates/answer.html', {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function (modal) {
+      $scope.answermodal = modal;
+    });
+
+    // Triggered in the login modal to close it
+    $scope.closeAnswer = function () {
+      $scope.answermodal.hide();
+    };
+
+    // Open the login modal
+    $scope.answer = function () {
+      if(window.localStorage.getItem('token') != undefined) {
+        $scope.answermodal.show();
+      } else {
+        $scope.login();
+      }
+    };
+
+    $scope.doAnswer = function (answer) {
+
+      ForumService.newAnswer($scope.activeQuestion._id, answer).then(
+        function(data){
+          $scope.activeQuestion.answers.push(data.data);
+          $scope.closeAnswer();
+        }, function(err){
+          $scope.closeAnswer();
+          showErrorAlert(err.data.message);
+        }
+      );
+
+    };
+
+
+    //LOGIN MODAL
+
+    $ionicModal.fromTemplateUrl('templates/login.html', {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function (modal) {
+      $scope.loginmodal = modal;
+    });
+
+    // Triggered in the login modal to close it
+    $scope.closeLogin = function () {
+      $scope.loginmodal.hide();
+    };
+
+    // Open the login modal
+    $scope.login = function () {
+      $scope.loginmodal.show();
+    };
+
+    // Perform the login action when the user submits the login form
+    $scope.doLogin = function (user) {
+
+      $scope.message = '';
+      $scope.error = 0;
+      if (user.mail && user.password) {
+        LoginService.login(user).then(function (res) {
+          window.localStorage.setItem('username', res.data.username);
+          window.localStorage.setItem('token', res.data.token);
+          window.localStorage.setItem('userid', res.data.id);
+          $scope.loginmodal.hide();
+        }, function (res) {
+          showAlert(res.data.message);
+        });
+      }
+
+    };
+
+    function showErrorAlert(message) {
+      var alertPopup = $ionicPopup.alert({
+        title: 'Error!',
+        template: message
+      });
+    }
+
+    $scope.getQuestion();
 
   });
 

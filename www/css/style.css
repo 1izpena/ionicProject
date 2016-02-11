@@ -360,3 +360,31 @@ html,body{
   -webkit-user-select: text !important;
 }
 
+.bindedBody * {
+  width: inherit !important;
+}
+
+.toggle-middle {
+  vertical-align: middle;
+}
+
+.toggle input + .track{
+  background-color: #ef473a;
+  border-color: #ef473a;
+}
+
+.inactiveTitle {
+  color: cornflowerblue;
+}
+
+
+/* Importante para los header en android */
+.bar-header {
+  border: 0 !important;
+}
+
+.answerCreated {
+  text-align: right;
+  font-size: 14px;
+  font-weight: lighter;
+}

@@ -1,11 +1,20 @@
 <ion-view>
 
-  <ion-header-bar class="bar-positive">
+  <ion-header-bar class="bar-positive" align-title="center">
     <h1 class="title">
       Forum
+      <label class="toggle toggle-calm toggle-middle" ng-click="gotoChat($event);">
+        <input type="checkbox" value="off">
+        <div class="track">
+          <div class="handle"></div>
+        </div>
+      </label>
+      <span class="inactiveTitle">
+        Chat
+      </span>
     </h1>
     <div class="buttons">
-      <button class="button button-small button-balanced icon ion-plus-round" ng-click="newQuestion()">New Question</button>
+      <button class="button button-small button-balanced icon ion-plus-round" ng-click="newQuestion()">Question</button>
     </div>
   </ion-header-bar>
 

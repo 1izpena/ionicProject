@@ -13,7 +13,6 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
     if (window.cordova && window.cordova.plugins.Keyboard) {
       cordova.plugins.Keyboard.hideKeyboardAccessoryBar(true);
       cordova.plugins.Keyboard.disableScroll(true);
-
     }
     if (window.StatusBar) {
       // org.apache.cordova.statusbar required
@@ -37,6 +36,7 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
       url: '/chat',
       templateUrl: 'templates/chat.html',
       abstract: true,
+      cache: false,
       controller: 'ChatCtrl'
     })
     .state('chat.channel', {
@@ -51,6 +51,7 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
       url: '/forum',
       templateUrl: 'templates/forum.html',
       controller: 'ForumCtrl',
+      cache: false,
       abstract: true
     })
     .state('forum.latest', {
@@ -81,6 +82,7 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
       url: "/forum/question/detail",
       templateUrl: 'templates/questionDetail.html',
       controller: 'DetailCtrl',
+      cache: false,
       params: {
         id: null
       }

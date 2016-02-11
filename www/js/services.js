@@ -546,7 +546,8 @@ angular.module('ionicDessiApp')
         getInvitations: getInvitations,
         acceptInvitation: acceptInvitation,
         refuseInvitation: refuseInvitation,
-        getSystemUsers : getSystemUsers
+        getSystemUsers : getSystemUsers,
+        postAnswer: postAnswer
       };
 
       function uploadFileS3 (data) {
@@ -707,7 +708,33 @@ angular.module('ionicDessiApp')
           });
 
         return promise;
-      };
+      }
+
+      function postAnswer (data) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+
+        var userid=data.userid;
+        var groupid=data.groupid;
+        var channelid=data.channelid;
+        var messageid=data.messageid;
+
+        $http({
+          method: 'post',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid+'/messages/'+messageid+'/answer',
+          data: data
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+
+        return promise;
+      }
 
     }])
 

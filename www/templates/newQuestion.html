@@ -21,9 +21,9 @@
         <label class="item-input error-item" ng-show="newQuestionForm.title.$invalid && !newQuestionForm.title.$pristine && newQuestionForm.title.$touched && newQuestionForm.title.$error.required">Title is required.</label>
 
 
-        <div text-angular ng-model="newquestion.body" class="padding-top" required="true"></div>
+        <div text-angular ng-model="newquestion.body" class="padding-top padding-bottom" required="true"></div>
 
-        <tags-input type="text" placeholder="Tags" ng-model="newquestion.tags" replace-spaces-with-dashes="false" display-property="text" add-on-space="true" min-length="2" display-property="tag"></tags-input>
+        <tags-input ng-if="state.current.name !== 'chat.channel'" type="text" placeholder="Tags" ng-model="newquestion.tags" replace-spaces-with-dashes="false" display-property="text" add-on-space="true" min-length="2"></tags-input>
 
         <label class="item  item-borderless loginButton">
           <button type="submit" class="button button-block button-balanced" ng-disabled="newQuestionForm.$invalid">

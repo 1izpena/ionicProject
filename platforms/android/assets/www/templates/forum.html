@@ -1,0 +1,43 @@
+<ion-view>
+
+  <ion-header-bar class="bar-positive" align-title="center">
+    <h1 class="title">
+      Forum
+      <label class="toggle toggle-calm toggle-middle" ng-click="gotoChat($event);">
+        <input type="checkbox" value="off">
+        <div class="track">
+          <div class="handle"></div>
+        </div>
+      </label>
+      <span class="inactiveTitle">
+        Chat
+      </span>
+    </h1>
+    <div class="buttons">
+      <button class="button button-small button-balanced icon ion-plus-round" ng-click="newQuestion()">New Question</button>
+    </div>
+  </ion-header-bar>
+
+  <ion-tabs class="tabs-striped tabs-top tabs-background-positive tabs-color-light tabs-icon-top">
+
+    <ion-tab title="Latest" icon="ion-ios-clock" href="/forum/latest">
+      <ion-nav-view name="latest-tab"></ion-nav-view>
+    </ion-tab>
+
+    <ion-tab title="Most viewed" icon="ion-eye" href="/forum/mostviewed">
+      <ion-nav-view name="mostViewed-tab"></ion-nav-view>
+    </ion-tab>
+
+    <ion-tab title="Most voted" icon="ion-thumbsup" href="/forum/mostvoted">
+      <ion-nav-view name="mostVoted-tab"></ion-nav-view>
+    </ion-tab>
+
+  </ion-tabs>
+
+  <ion-content>
+    <div>
+
+    </div>
+  </ion-content>
+
+</ion-view>

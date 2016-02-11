@@ -22,15 +22,15 @@
     </h5>
   </ion-header-bar>
   <ion-content id="messageContent" class=" has-subheader padding" ng-class="activeChannel==null && activeGroup == -1 && showChannelSettings == false && showGroupSettings == false ? 'has-header' : ''" delegate-handle="messageScroll">
-
-    <div class="gotoForum row" ng-show="activeChannel==null && activeGroup == -1 && showChannelSettings == false && showGroupSettings == false">
+<!--
+    <a class="gotoForum row" ng-show="activeChannel==null && activeGroup == -1 && showChannelSettings == false && showGroupSettings == false" ng-click="goToForum()">
       <div class="col">
         <button class="button button-positive button-large icon icon-right ion-chevron-right">
           Go to forum
         </button>
       </div>
-    </div>
-
+    </a>
+-->
     <div id="cardList" class="list" ng-show="activeChannel!=null && activeGroup != -1 && showChannelSettings == false && showGroupSettings == false">
         <div class="list card"  ng-repeat="message in messagess" on-finish-render="messageRenderCallback">
           <div class="item item-avatar">

@@ -3,7 +3,7 @@
 
   <ion-header-bar class="bar-positive">
     <div class="buttons">
-      <a class="button button-clear" nav-transition="android" nav-direction="back" ng-click="gotoForum()" "><span class="icon icon-left ion-chevron-left"></span> Forum</a>
+      <a class="button button-clear" nav-transition="android" nav-direction="back" ng-click="gotoForum()"><span class="icon icon-left ion-chevron-left"></span> Forum</a>
     </div>
     <h1 class="title">
       Question
@@ -33,9 +33,9 @@
         </div>
 
         <div class="col col-80 col-center">
-          <p data-ng-bind-html="trustAsHtml(activeQuestion.body)"></p>
+          <p data-ng-bind-html="trustAsHtml(activeQuestion.body)" class="bindedBody"></p>
           <div class="tags">
-            <a ng-repeat="tag in activeQuestion.tags" class="label label-info" href="">{{tag.tag}}</a>
+            <a ng-repeat="tag in activeQuestion.tags" class="label label-info" href="">{{tag.text}}</a>
           </div>
         </div>
 
@@ -54,10 +54,9 @@
       </div>
 
       <div class="item item-text-wrap" ng-repeat="comment in activeQuestion.comments | orderBy: '-created'" ng-show="showQuestionComments">
-        <span class="commentbody">{{comment.comment}}</span>
-        <span class="commentuser"> - by {{comment._user.username}}</span> <br>
+        <span class="commentbody">{{comment.comment}}</span> <br>
         <span class="row">
-          <span class="commentdate" style="text-align: right;">On {{comment.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}}</span>
+          <span class="commentdate answerCreated" style="text-align: right;">On {{comment.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}} by {{comment._user.username}}</span>
         </span>
       </div>
 
@@ -94,14 +93,14 @@
           </div>
 
           <div class="col col-80 col-center">
-            <p data-ng-bind-html="trustAsHtml(answer.body)"></p>
+            <p data-ng-bind-html="trustAsHtml(answer.body)" class="bindedBody"></p>
           </div>
 
         </div>
 
         <div class="answer row">
-          <div class="time col" style="text-align: right;">
-            <span class="glyphicon glyphicon-time pull-right text-muted">Created on {{answer.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}} by {{activeQuestion._user.username}}</span>
+          <div class="time answerCreated col" style="text-align: right;">
+            <span class="glyphicon glyphicon-time pull-right text-muted">Created on {{answer.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}} by {{answer._user.username}}</span>
           </div>
         </div>
 
@@ -112,10 +111,9 @@
         </div>
 
         <div class="item item-text-wrap" ng-repeat="comment in answer.comments | orderBy: '-created'" ng-show="showAnswerComments">
-          <span class="commentbody">{{comment.comment}}</span>
-          <span class="commentuser"> - by {{comment._user.username}}</span> <br>
-        <span class="row">
-          <span class="commentdate" style="text-align: right;">On {{comment.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}}</span>
+          <span class="commentbody">{{comment.comment}}</span> <br>
+        <span class="row answerCreated">
+          <span class="commentdate" style="text-align: right;">On {{comment.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}} by {{comment._user.username}}</span>
         </span>
         </div>
 

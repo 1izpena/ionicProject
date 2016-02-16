@@ -388,3 +388,7 @@ html,body{
   font-size: 14px;
   font-weight: lighter;
 }
+
+.file {
+  display: none;
+}

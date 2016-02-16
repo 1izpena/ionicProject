@@ -92,6 +92,7 @@ angular.module('ionicDessiApp')
       deleteGroup : deleteGroup,
       editChannel: editChannel,
       addUserToChannel: addUserToChannel,
+      getChannelMembers: getChannelMembers,
       deleteUserFromChannel: deleteUserFromChannel,
       unsubscribeFromChannel: unsubscribeFromChannel,
       deleteChannel: deleteChannel
@@ -238,6 +239,29 @@ angular.module('ionicDessiApp')
       }).success(function(data) {
         //console.log("data");
         //console.log(data);
+        angular.forEach(data.privateChannels, function(channel){
+          // Here, the lang object will represent the lang you called the request on for the scope of the function
+          getChannelMembers(data.id, channel.id).then(
+            function(members) {
+              channel.admin = members.data.admin;
+            }, function(err) {
+              console.log(err.message);
+            }
+          );
+        });
+        /*
+        for(var i = 0 ; i<data.privateChannels.length ; i++){
+          getChannelMembers(data.id, data.privateChannels[i].id).then(
+            function(data) {
+              j =
+              j++;
+            }, function(err) {
+              console.log(err.message);
+            }
+          );
+          data.privateChannels[i].admin = members.admin;
+        }
+        */
         defered.resolve(data);
       })
         .error(function(err) {
@@ -438,19 +462,20 @@ angular.module('ionicDessiApp')
       var defered = $q.defer();
       var promise = defered.promise;
       var userid = window.localStorage.getItem('userid');
+      console.log("entro en edit channel");
       $http({
         method: 'put',
-        headers: {'x-access-token': window.localStorage.getItem('token')},
-        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid,
-        data: data
-      }).then(
-        function(response) {
-          defered.resolve(response);
-        },
-        function(error){
-          defered.reject(error);
-        }
-      );
+        headers: {'x-access-token': window.localStorage.getItem('token'), 'Content-Type': 'application/x-www-form-urlencoded'},
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid +'/channels/'+channelid,
+        data: 'channelName='+data
+
+      }).success(function(data) {
+        defered.resolve(data);
+      })
+        .error(function(err) {
+          defered.reject(err)
+        });
+
       return promise;
     }
 
@@ -458,7 +483,7 @@ angular.module('ionicDessiApp')
       var defered = $q.defer();
       var promise = defered.promise;
       var userid = window.localStorage.getItem('userid');
-      var userid1 = userAdd;
+      var userid1 = userAdd.id;
       $http({
         method: 'post',
         headers: {'x-access-token': window.localStorage.getItem('token')},
@@ -475,11 +500,30 @@ angular.module('ionicDessiApp')
       return promise;
     }
 
+    function getChannelMembers (groupid,channelid) {
+      var defered = $q.defer();
+      var promise = defered.promise;
+      var userid = window.localStorage.getItem('userid');
+      $http({
+        method: 'get',
+        headers: {'x-access-token': window.localStorage.getItem('token')},
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid+'/users'
+      }).then(
+        function(response) {
+          defered.resolve(response);
+        },
+        function(error){
+          defered.reject(error);
+        }
+      );
+      return promise;
+    }
+
     function deleteUserFromChannel (groupid,channelid,data) {
       var defered = $q.defer();
       var promise = defered.promise;
       var userid = window.localStorage.getItem('userid');
-      var userid1 = data;
+      var userid1 = data.id;
       $http({
         method: 'delete',
         headers: {'x-access-token': window.localStorage.getItem('token')},
@@ -536,18 +580,20 @@ angular.module('ionicDessiApp')
 
   }])
 
-  .service('ChatService', ['$http', '$q', 'API_BASE',
-    function($http, $q, API_BASE) {
+  .service('ChatService', ['$http', '$q', 'API_BASE', 'Upload',
+    function($http, $q, API_BASE, Upload) {
 
       return {
         uploadFileS3: uploadFileS3,
+        getDownloadUrl: getDownloadUrl,
         postMessage: postMessage,
         getMessages: getMessages,
         getInvitations: getInvitations,
         acceptInvitation: acceptInvitation,
         refuseInvitation: refuseInvitation,
         getSystemUsers : getSystemUsers,
-        postAnswer: postAnswer
+        postAnswer: postAnswer,
+        publishMessage: publishMessage
       };
 
       function uploadFileS3 (data) {
@@ -564,11 +610,14 @@ angular.module('ionicDessiApp')
           data: {
             'groupid': data.groupid,
             'channelid': data.channelid,
-            'filename': data.file.name
+            'userid': data.userid,
+            'filename': data.file.name,
+            'operation': 'PUT'
           }
         }).then( function(response){
             // Put del fichero en AWS S3
-            $http({
+            //$http({
+            Upload.http({
               method: 'put',
               url: response.data.url,
               headers: {
@@ -581,7 +630,39 @@ angular.module('ionicDessiApp')
               },
               function (err) {
                 defered.reject(err);
+              },
+              function (progress) {
+                defered.notify(progress);
               });
+          },
+          function (err) {
+            defered.reject(err);
+          });
+
+        return promise;
+      }
+
+      function getDownloadUrl (data) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+
+        // getSignedUrl para descargar fichero d AWS S3
+        $http({
+          method: 'post',
+          url: API_BASE + 'api/v1/file/getSignedUrl',
+          headers: {
+            'x-access-token': window.localStorage.getItem('token')
+          },
+          data: {
+            'groupid': data.groupid,
+            'channelid': data.channelid,
+            'userid': data.userid,
+            'filename': data.filename,
+            'operation': 'GET'
+          }
+        }).then( function(response){
+            // Return URL
+            defered.resolve(response);
           },
           function (err) {
             defered.reject(err);
@@ -734,6 +815,33 @@ angular.module('ionicDessiApp')
         );
 
         return promise;
+      }
+
+      function publishMessage (data) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+
+        var userid = window.localStorage.getItem('userid');
+        var groupid= data.groupid;
+        var channelid=data.channelid;
+        var messageid=data.messageid;
+
+        $http({
+          method: 'post',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid+'/messages/'+messageid+'/publish',
+          data: { tags: data.tags }
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+
+        return promise;
+
       }
 
     }])
@@ -1056,4 +1164,47 @@ angular.module('ionicDessiApp')
         }
       }
     }
-  });
+  })
+  .directive('file', function(){
+    return {
+      restrict: 'A',
+      scope: {
+        file: '=',
+        uploadFn: '&uploadFn'
+      },
+      link: function(scope, element){
+        element.bind('change', function(event){
+          var files = event.target.files;
+          var file = files[0];
+          scope.$parent.$parent.$parent.file = file ? file : undefined;
+          scope.$apply();
+
+          if (file) {
+            scope.uploadFn();
+          }
+        });
+      }
+    };
+  })
+
+  .directive('bindHtmlCompile', ['$compile', function ($compile) {
+    return {
+      restrict: 'A',
+      link: function (scope, element, attrs) {
+        scope.$watch(function () {
+          return scope.$eval(attrs.bindHtmlCompile);
+        }, function (value) {
+          // In case value is a TrustedValueHolderType, sometimes it
+          // needs to be explicitly called into a string in order to
+          // get the HTML string.
+          element.html(value && value.toString());
+          // If scope is provided use it, otherwise use parent scope
+          var compileScope = scope;
+          if (attrs.bindHtmlScope) {
+            compileScope = scope.$eval(attrs.bindHtmlScope);
+          }
+          $compile(element.contents())(compileScope);
+        });
+      }
+    };
+  }]);

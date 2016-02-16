@@ -140,7 +140,7 @@ angular.module('ionicDessiApp.controllers', [])
 
   })
 
-  .controller('ChatCtrl', function ($scope, $state, GroupsService, ChatService, $ionicPopup, Socket, $ionicScrollDelegate, $ionicLoading, $sce, $ionicModal, $ionicTabsDelegate, $ionicActionSheet, $ionicSideMenuDelegate) {
+  .controller('ChatCtrl', function ($scope, $state, $ionicHistory, GroupsService, ChatService, $ionicPopup, Socket, $ionicScrollDelegate, $ionicLoading, $sce, $ionicModal, $ionicTabsDelegate, $ionicActionSheet, $ionicSideMenuDelegate, downgularQueue) {
 
     $scope.userid = window.localStorage.getItem('userid');
     $scope.username = window.localStorage.getItem('username');
@@ -148,7 +148,7 @@ angular.module('ionicDessiApp.controllers', [])
     $scope.showChannels = false;
     $scope.showUsers = false;
     $scope.showInvitations = false;
-    $scope.groups = 0;
+    $scope.groups = [];
     $scope.messagess = [];
     $scope.activeGroup = -1;
     $scope.activeChannel = null;
@@ -159,6 +159,24 @@ angular.module('ionicDessiApp.controllers', [])
     $scope.systemUsers = null;
     $scope.showChannelSettings = false;
     $scope.showGroupSettings = false;
+    $scope.state = $state;
+
+    var fileDownloadQueue = downgularQueue.build('files', 'Downloads', '');
+
+
+    $scope.logout = function() {
+
+      window.localStorage.removeItem('userid');
+      window.localStorage.removeItem('uername');
+      window.localStorage.removeItem('token');
+
+      $ionicHistory.nextViewOptions({
+        disableBack: true
+      });
+
+      $state.go('home');
+
+    };
 
     // Emitimos evento de conexion a chat para recibir nuevas invitaciones a grupos
     Socket.emit('newChatConnection', {'userid': window.localStorage.getItem('userid')});
@@ -171,6 +189,13 @@ angular.module('ionicDessiApp.controllers', [])
           'groupid': $scope.groups[$scope.activeGroup].id,
           'userid': window.localStorage.getItem('userid')
         });
+
+        GroupsService.getChannels($scope.groups[i].id).then(
+          function(data) {
+          $scope.groups[i] = data;
+        }, function(err) {
+          showErrorAlert(err.message);
+        });
       }
       $scope.activeChannel = null;
       $scope.messagess = [];
@@ -181,7 +206,7 @@ angular.module('ionicDessiApp.controllers', [])
         $ionicSideMenuDelegate.canDragContent(false);
       }
 
-      if(i === 1) {
+      if(i === -1) {
         $ionicSideMenuDelegate.canDragContent(true);
         $scope.showGroupSettings = false;
       } else {
@@ -289,7 +314,11 @@ angular.module('ionicDessiApp.controllers', [])
         });
       }
 
-    }
+    };
+
+    $scope.trustAsHtml = function(string) {
+      return $sce.trustAsHtml(string);
+    };
 
     $scope.$on('messageRenderCallback', function (messageRenderCallbackEvent) {
       $ionicScrollDelegate.$getByHandle('messageScroll').scrollBottom(true);
@@ -454,13 +483,14 @@ angular.module('ionicDessiApp.controllers', [])
               } else {
                 GroupsService.createNewGroup($scope.data).then(
                   function (data) {
-                    GroupsService.getChannels(data.data.id).then(
+                    $scope.groups.push(data.data);
+                    /*GroupsService.getChannels(data.data.id).then(
                       function (dataChannels) {
                         $scope.groups[$scope.groups.length] = dataChannels;
                       }, function (err) {
                         showErrorAlert(err);
                       }
-                    );
+                    );*/
                   }, function (err) {
                     // Tratar el error
                     showErrorAlert(err);
@@ -750,7 +780,9 @@ angular.module('ionicDessiApp.controllers', [])
       $ionicActionSheet.show({
         buttons: [
           {text: 'Take picture'},
-          {text: 'Choose image from library'}
+          {text: 'Choose image from library'},
+          {text: 'Upload a file'},
+          {text: 'Create a question'}
         ],
         titleText: 'Action',
         cancelText: 'Cancel',
@@ -765,10 +797,107 @@ angular.module('ionicDessiApp.controllers', [])
               }, function(err) {
                 showErrorAlert(err);
               }, null);
+          } else if(index == 2){
+            ionic.trigger('click', { target: document.getElementsByClassName('file')[0] });
+          } else if(index == 3) {
+            if($scope.activeGroup !== -1 && $scope.activeChannel !== -1 && !$scope.showGroupSettings && !$scope.showChannelSettings) {
+              $scope.newQuestion();
+            }
           }
           return true;
         }
       })
+    };
+
+    //ANSWER MODAL
+
+    $ionicModal.fromTemplateUrl('templates/answer.html', {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function (modal) {
+      $scope.answermodal = modal;
+    });
+
+    // Triggered in the login modal to close it
+    $scope.closeAnswer = function () {
+      $scope.answermodal.hide();
+    };
+
+    // Open the login modal
+    $scope.answer = function (messageid) {
+      $scope.activeMessageId = messageid;
+      if(window.localStorage.getItem('token') != undefined) {
+        $scope.answermodal.show();
+      } else {
+        $scope.login();
+      }
+    };
+
+    $scope.doAnswer = function (answer) {
+
+      var requestData = {
+        userid: window.localStorage.getItem('userid'),
+        groupid: $scope.groups[$scope.activeGroup].id,
+        channelid: $scope.activeChannel.id,
+        messageid: $scope.activeMessageId,
+        text: answer.body,
+        messageType: 'QUESTION'
+      };
+
+      ChatService.postAnswer(requestData).then(
+        function (data) {
+          $scope.closeAnswer();
+        },
+        function (err) {
+          showErrorAlert(err.message);
+        }
+      );
+
+    };
+
+    //NEW QUESTION MODAL
+
+    $ionicModal.fromTemplateUrl('templates/newQuestion.html', {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function (modal) {
+      $scope.newquestionmodal = modal;
+    });
+
+    // Triggered in the login modal to close it
+    $scope.closeNewQuestion = function () {
+      $scope.newquestionmodal.hide();
+    };
+
+    // Open the login modal
+    $scope.newQuestion = function () {
+      if(window.localStorage.getItem('token') != undefined) {
+        $scope.newquestionmodal.show();
+      } else {
+        $scope.login();
+      }
+    };
+
+    $scope.doNewQuestion = function (newquestion) {
+
+      var requestData = {
+        userid: window.localStorage.getItem('userid'),
+        groupid: $scope.groups[$scope.activeGroup].id,
+        channelid: $scope.activeChannel.id,
+        title: newquestion.title,
+        text: newquestion.body,
+        messageType: 'QUESTION'
+      };
+
+      ChatService.postMessage(requestData).then(
+        function (data) {
+          $scope.closeNewQuestion();
+        },
+        function (err) {
+          showErrorAlert(err.message);
+        }
+      );
+
     };
 
     //ERRORS
@@ -780,10 +909,115 @@ angular.module('ionicDessiApp.controllers', [])
       });
     }
 
+    //FILES
+
+    $scope.confirmUploadFile = function(){
+      $ionicPopup.show({
+        template: '<label>Your File</label><input type="text" ng-value="file.name" disabled> <br> <label>Comment(Optional)</label> <input type="text" ng-value="file.name" placeholder="Comment" ng-model="comment">',
+        title: 'Upload File',
+        scope: $scope,
+        buttons: [
+          {
+            text: 'Cancel',
+            onTap: function (e) {
+              $scope.file = '';
+            }
+          },
+          {
+            text: '<b>Confirm</b>',
+            type: 'button-positive',
+            onTap: function (e) {
+              if (!$scope.file) {
+                showErrorAlert('File required');
+              } else {
+
+                $scope.progress=0;
+                $scope.uploading = true;
+
+                var uploadData = {
+                  userid: window.localStorage.getItem('userid'),
+                  groupid: $scope.groups[$scope.activeGroup].id,
+                  channelid: $scope.activeChannel.id,
+                  file: $scope.file,
+                  filename: $scope.file.name,
+                  messageType: 'FILE'
+                };
+
+                if ($scope.comment) {
+                  uploadData.comment = $scope.comment;
+                }
+
+                ChatService.uploadFileS3(uploadData).then(
+                  function (result) {
+                    showToast('File uploaded successfully!!', $ionicLoading);
+                    ChatService.postMessage(uploadData).then(
+                      function (result) {
+
+                      },
+                      function (error) {
+                        showErrorAlert(error.message);
+                      }
+                    );
+
+                  },
+                  function (error) {
+                    showErrorAlert(error.message);
+                  },
+                  function (progress) {
+                    $scope.progress = Math.min(100, parseInt(100.0 * progress.loaded / progress.total));
+                    console.log('Uploading: '+progress+'%');
+                  }
+                );
+              }
+            }
+          }
+        ]
+      });
+    };
+
+    $scope.getDownloadLink = function (filename, ev) {
+
+      ev.preventDefault();
+
+      var data = {
+        userid: window.localStorage.getItem('userid'),
+        groupid: $scope.groups[$scope.activeGroup].id,
+        channelid: $scope.activeChannel.id,
+        filename: filename
+      };
+
+      ChatService.getDownloadUrl(data).then(
+        function (result) {
+          /*
+          fileDownloadQueue.addFileDownload({}, result.data.url, '');
+          fileDownloadQueue.startDownloading();
+          */
+          window.open(result.data.url, '_self', 'location=no');
+          showToast('Started downloading new file', $ionicLoading);
+        },
+        function (error) {
+          // TODO: Mostrar error
+          showErrorAlert(error.message);
+        }
+      );
+
+    };
+
     //Gestion de recepcion de sockets
 
     Socket.on('newMessage', function (data) {
       $scope.messagess.push(data);
+      $scope.$apply();
+    });
+
+    Socket.on('newQuestionAnswer', function (data) {
+      var message = data;
+      for (var i=0; i < $scope.messagess.length; i++) {
+        if ($scope.messagess[i].id == message.id) {
+          $scope.messagess[i].answers.push(message.answer);
+          break;
+        }
+      }
       $scope.$apply();
     });
 
@@ -952,6 +1186,7 @@ angular.module('ionicDessiApp.controllers', [])
     $scope.questions = null;
     $scope.activeQuestion = null;
     $scope.activeQuestionIndex = -1;
+    $scope.state = $state;
 
     $scope.gotoChat = function(e) {
       if(window.localStorage.getItem('token') != undefined) {

@@ -54,10 +54,9 @@
       </div>
 
       <div class="item item-text-wrap" ng-repeat="comment in activeQuestion.comments | orderBy: '-created'" ng-show="showQuestionComments">
-        <span class="commentbody">{{comment.comment}}</span>
-        <span class="commentuser"> - by {{comment._user.username}}</span> <br>
+        <span class="commentbody">{{comment.comment}}</span> <br>
         <span class="row">
-          <span class="commentdate" style="text-align: right;">On {{comment.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}}</span>
+          <span class="commentdate answerCreated" style="text-align: right;">On {{comment.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}} by {{comment._user.username}}</span>
         </span>
       </div>
 
@@ -100,8 +99,8 @@
         </div>
 
         <div class="answer row">
-          <div class="time col" style="text-align: right;">
-            <span class="glyphicon glyphicon-time pull-right text-muted">Created on {{answer.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}} by {{activeQuestion._user.username}}</span>
+          <div class="time answerCreated col" style="text-align: right;">
+            <span class="glyphicon glyphicon-time pull-right text-muted">Created on {{answer.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}} by {{answer._user.username}}</span>
           </div>
         </div>
 
@@ -112,10 +111,9 @@
         </div>
 
         <div class="item item-text-wrap" ng-repeat="comment in answer.comments | orderBy: '-created'" ng-show="showAnswerComments">
-          <span class="commentbody">{{comment.comment}}</span>
-          <span class="commentuser"> - by {{comment._user.username}}</span> <br>
-        <span class="row">
-          <span class="commentdate" style="text-align: right;">On {{comment.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}}</span>
+          <span class="commentbody">{{comment.comment}}</span> <br>
+        <span class="row answerCreated">
+          <span class="commentdate" style="text-align: right;">On {{comment.created | amDateFormat:'YYYY-MM-DD HH:mm:ss'}} by {{comment._user.username}}</span>
         </span>
         </div>
 

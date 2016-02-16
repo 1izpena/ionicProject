@@ -32,12 +32,12 @@
     </a>
 -->
     <div id="cardList" class="list" ng-show="activeChannel!=null && activeGroup != -1 && showChannelSettings == false && showGroupSettings == false">
-        <div class="list card"  ng-repeat="message in messagess" on-finish-render="messageRenderCallback">
+        <div class="list card"  ng-repeat="message in messagess" name="{{message.id}}" id="{{message.id}}" on-finish-render="messageRenderCallback">
 
           <div class="item item-divider item-positive item-icon-right" ng-if="message.messageType == 'QUESTION'">
             <span class="ion-help-circled"></span>
             QUESTION
-            <span class="icon ion-android-share" ng-if="message.user.id === userid" ng-click="shareQuestion()"></span>
+            <span class="icon ion-android-share" ng-if="message.user.id === userid" ng-click="shareQuestion(message)"></span>
           </div>
 
           <div class="item item-avatar">
@@ -55,8 +55,19 @@
           </div>
 
 
-          <div class="item item-text-wrap" ng-if="message.messageType == 'TEXT'">
+          <div class="item item-text-wrap" ng-if="message.messageType == 'TEXT' && message.user.mail !== 'internalUser@localhost'">
             {{message.text}}
+          </div>
+
+          <div class="item item-text-wrap" ng-if="message.messageType == 'TEXT' && message.text.indexOf('internalMessage#') == 0">
+            <span bind-html-compile="getInternalMessage($index)"></span>
+          </div>
+
+          <div class="item item-text-wrap" ng-if="message.messageType == 'FILE'">
+            {{message.text}}
+            <a href="#" ng-click="getDownloadLink(message.filename, $event)">
+              <span class="icon ion-document-text" style="font-size: 30px;"></span> {{message.filename}}
+            </a>
           </div>
 
           <div class="item item-text-wrap" data-ng-bind-html="trustAsHtml(message.text)" ng-if="message.messageType == 'QUESTION'"></div>
@@ -160,7 +171,7 @@
                 <small class="col-10 assertive" ng-show="user.id == groups[activeGroup].admin.id">Admin</small>
               </div>
               <p ng-bind-html="highlight(user.mail, searchText)">{{user.mail}}</p>
-              <ion-option-button class="button-assertive" ng-if="userid == groups[activeGroup].admin.id && user.id != userid" ng-click="expelUser(user)">Expel</ion-option-button>
+              <ion-option-button class="button-assertive" ng-if="userid == groups[activeGroup].admin.id && user.id != userid" ng-click="expelUser(user)">Eject</ion-option-button>
             </ion-item>
           </div>
           </ion-list>
@@ -187,13 +198,13 @@
         <div class="item item-button-right"  ng-if="userid == groups[activeGroup].admin.id">
           <label class="item-input ">
             <i class="icon ion-edit placeholder-icon"></i>
-            <input type="text" id="channelSettingsNameInput" name="settingsInput" placeholder="Group Name" value={{activeChannel.channelName}} ng-focus="showSettingsNameButtons = true" ng-blur="showSettingsNameButtons = false" style="font-weight: bold;">
+            <input type="text" id="channelSettingsNameInput" name="settingsInput" placeholder="Channel Name" value={{activeChannel.channelName}} ng-focus="showSettingsNameButtons = true" ng-blur="showSettingsNameButtons = false" style="font-weight: bold;">
 
           </label>
           <div class="item item-borderless buttons settingsNameButton" ng-show="showSettingsNameButtons">
-            <button class="button button-clear icon ion-checkmark-round button-balanced" ng-click="updateGroupName()">
+            <button class="button button-clear icon ion-checkmark-round button-balanced" ng-click="updateChannelName()">
             </button>
-            <button class="button button-clear icon ion-close-round button-assertive" ng-click="cancelNameInput()">
+            <button class="button button-clear icon ion-close-round button-assertive" ng-click="cancelChannelNameInput()">
             </button>
           </div>
 
@@ -206,11 +217,11 @@
         </div>
       </div>
 
-      <button class="button button-block button-assertive" ng-click="leaveChannelConfirm()">
+      <button class="button button-block button-assertive"  ng-if="activeChannel.type === 'private' && activeChannel.admin.id != userid" ng-click="leaveChannelConfirm()">
         Leave {{activeChannel.channelName}}
       </button>
 
-      <button class="button button-block button-assertive" ng-click="deleteChannelConfirm()" ng-if="userid == groups[activeGroup].admin.id">
+      <button class="button button-block button-assertive" ng-click="deleteChannelConfirm()" ng-if="activeChannel.admin.id == userid">
         Delete {{activeChannel.channelName}}
       </button>
 
@@ -238,17 +249,17 @@
             </button>
           </div>
           <ion-list>
-            <div ng-repeat="user in groups[activeGroup].users | filter:searchText">
+            <div ng-repeat="user in activeChannel.users | filter:searchText">
               <ion-item class="item item-avatar">
                 <img
                   ng-src="http://placehold.it/50/{{(window.localStorage.getItem('userid')!=message.user.id)?'55C1E7':'FA6F57'}}/fff&text={{user.username | limitTo:2 | uppercase }}"
                   alt="User Avatar" class="img-circle"/>
                 <div class="row">
                   <h2 class="col-90" ng-bind-html="highlight(user.username, searchText)">@{{user.username}}</h2>
-                  <small class="col-10 assertive" ng-show="user.id == groups[activeGroup].admin.id">Admin</small>
+                  <small class="col-10 assertive" ng-show="activeChannel.admin.id == user.id">Admin</small>
                 </div>
                 <p ng-bind-html="highlight(user.mail, searchText)">{{user.mail}}</p>
-                <ion-option-button class="button-assertive" ng-if="userid == groups[activeGroup].admin.id && user.id != userid" ng-click="expelUser(user)">Expel</ion-option-button>
+                <ion-option-button class="button-assertive" ng-if="activeChannel.admin.id == userid && user.id != userid" ng-click="expelUserFromChannel(user)">Eject</ion-option-button>
               </ion-item>
             </div>
           </ion-list>
@@ -283,6 +294,7 @@
     <button class="button button-clear button-positive" ng-show="activeChannel!=null && activeGroup != -1 && showChannelSettings == false && showGroupSettings == false && text != ''" ng-click="sendText(text); text='';">
       <strong>Send</strong>
     </button>
+    <input type="file" class="file" file="file" upload-fn="confirmUploadFile()"/>
   </ion-footer-bar>
   <!--
   </div>

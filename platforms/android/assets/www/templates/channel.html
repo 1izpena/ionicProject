@@ -33,6 +33,13 @@
 -->
     <div id="cardList" class="list" ng-show="activeChannel!=null && activeGroup != -1 && showChannelSettings == false && showGroupSettings == false">
         <div class="list card"  ng-repeat="message in messagess" on-finish-render="messageRenderCallback">
+
+          <div class="item item-divider item-positive item-icon-right" ng-if="message.messageType == 'QUESTION'">
+            <span class="ion-help-circled"></span>
+            QUESTION
+            <span class="icon ion-android-share" ng-if="message.user.id === userid" ng-click="shareQuestion()"></span>
+          </div>
+
           <div class="item item-avatar">
             <img
               ng-src="http://placehold.it/50/{{(window.localStorage.getItem('userid')!=message.user.id)?'55C1E7':'FA6F57'}}/fff&text={{message.user.username | limitTo:2 | uppercase }}"
@@ -46,8 +53,37 @@
               <span am-time-ago="message.date"></span>
             </small>
           </div>
-          <div class="item item-text-wrap">
+
+
+          <div class="item item-text-wrap" ng-if="message.messageType == 'TEXT'">
             {{message.text}}
+          </div>
+
+          <div class="item item-text-wrap" ng-if="message.messageType == 'FILE'">
+            {{message.text}}
+            <a href="#" ng-click="getDownloadLink(message.filename, $event)">
+              <span class="icon ion-document-text" style="font-size: 30px;"></span> {{message.filename}}
+            </a>
+          </div>
+
+          <div class="item item-text-wrap" data-ng-bind-html="trustAsHtml(message.text)" ng-if="message.messageType == 'QUESTION'"></div>
+
+          <div class="item item-divider item-positive" ng-if="message.messageType == 'QUESTION'">
+            ANSWERS
+          </div>
+
+          <div ng-if="message.messageType == 'QUESTION'">
+            <div ng-repeat="answer in message.answers" class="item item-text-wrap">
+              <div data-ng-bind-html="trustAsHtml(answer.text)"></div>
+              <div class="answerCreated">
+                On {{answer.date | amDateFormat:'YYYY-MM-DD HH:mm:ss'}} by {{answer.user.username}}
+              </div>
+            </div>
+          </div>
+
+          <div class="item item-divider item-balanced" ng-if="message.messageType == 'QUESTION'" ng-click="answer(message.id)">
+            <span class="icon ion-plus-circled"></span>
+            ADD NEW ANSWER
           </div>
         </div>
     </div>
@@ -254,6 +290,7 @@
     <button class="button button-clear button-positive" ng-show="activeChannel!=null && activeGroup != -1 && showChannelSettings == false && showGroupSettings == false && text != ''" ng-click="sendText(text); text='';">
       <strong>Send</strong>
     </button>
+    <input type="file" class="file" file="file" upload-fn="confirmUploadFile()"/>
   </ion-footer-bar>
   <!--
   </div>

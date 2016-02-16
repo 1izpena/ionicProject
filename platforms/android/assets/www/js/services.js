@@ -536,17 +536,19 @@ angular.module('ionicDessiApp')
 
   }])
 
-  .service('ChatService', ['$http', '$q', 'API_BASE',
-    function($http, $q, API_BASE) {
+  .service('ChatService', ['$http', '$q', 'API_BASE', 'Upload',
+    function($http, $q, API_BASE, Upload) {
 
       return {
         uploadFileS3: uploadFileS3,
+        getDownloadUrl: getDownloadUrl,
         postMessage: postMessage,
         getMessages: getMessages,
         getInvitations: getInvitations,
         acceptInvitation: acceptInvitation,
         refuseInvitation: refuseInvitation,
-        getSystemUsers : getSystemUsers
+        getSystemUsers : getSystemUsers,
+        postAnswer: postAnswer
       };
 
       function uploadFileS3 (data) {
@@ -563,11 +565,14 @@ angular.module('ionicDessiApp')
           data: {
             'groupid': data.groupid,
             'channelid': data.channelid,
-            'filename': data.file.name
+            'userid': data.userid,
+            'filename': data.file.name,
+            'operation': 'PUT'
           }
         }).then( function(response){
             // Put del fichero en AWS S3
-            $http({
+            //$http({
+            Upload.http({
               method: 'put',
               url: response.data.url,
               headers: {
@@ -580,7 +585,39 @@ angular.module('ionicDessiApp')
               },
               function (err) {
                 defered.reject(err);
+              },
+              function (progress) {
+                defered.notify(progress);
               });
+          },
+          function (err) {
+            defered.reject(err);
+          });
+
+        return promise;
+      }
+
+      function getDownloadUrl (data) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+
+        // getSignedUrl para descargar fichero d AWS S3
+        $http({
+          method: 'post',
+          url: API_BASE + 'api/v1/file/getSignedUrl',
+          headers: {
+            'x-access-token': window.localStorage.getItem('token')
+          },
+          data: {
+            'groupid': data.groupid,
+            'channelid': data.channelid,
+            'userid': data.userid,
+            'filename': data.filename,
+            'operation': 'GET'
+          }
+        }).then( function(response){
+            // Return URL
+            defered.resolve(response);
           },
           function (err) {
             defered.reject(err);
@@ -707,7 +744,33 @@ angular.module('ionicDessiApp')
           });
 
         return promise;
-      };
+      }
+
+      function postAnswer (data) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+
+        var userid=data.userid;
+        var groupid=data.groupid;
+        var channelid=data.channelid;
+        var messageid=data.messageid;
+
+        $http({
+          method: 'post',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid+'/messages/'+messageid+'/answer',
+          data: data
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+
+        return promise;
+      }
 
     }])
 
@@ -1029,4 +1092,25 @@ angular.module('ionicDessiApp')
         }
       }
     }
+  })
+  .directive('file', function(){
+    return {
+      restrict: 'A',
+      scope: {
+        file: '=',
+        uploadFn: '&uploadFn'
+      },
+      link: function(scope, element){
+        element.bind('change', function(event){
+          var files = event.target.files;
+          var file = files[0];
+          scope.$parent.$parent.$parent.file = file ? file : undefined;
+          scope.$apply();
+
+          if (file) {
+            scope.uploadFn();
+          }
+        });
+      }
+    };
   });

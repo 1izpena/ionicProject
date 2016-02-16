@@ -85,6 +85,9 @@
     <ion-side-menu side="left">
       <ion-header-bar class="bar-positive">
         <h1 class="title">{{username}}</h1>
+        <div class="buttons">
+          <button class="button icon ion-log-out button-assertive" ng-click="logout()"></button>
+        </div>
       </ion-header-bar>
       <ion-content>
         <ion-list>
@@ -97,7 +100,7 @@
             <div ng-repeat="invitation in invitations">
               <ion-item>
                 <span class="icon ion-alert-circled"> </span>
-                {{invitation.groupname}}
+                {{invitation.groupName}}
                 <ion-option-button class="button-balanced" ng-click="acceptInvitation(invitation, $index)">Yes</ion-option-button>
                 <ion-option-button class="button-assertive" ng-click="refuseInvitation(invitation, $index)">No</ion-option-button>
               </ion-item>

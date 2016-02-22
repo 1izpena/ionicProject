@@ -1713,7 +1713,7 @@ angular.module('ionicDessiApp.controllers', [])
 
   })
 
-  .controller('ForumCtrl', function ($scope, ForumService, $sce, $stateParams, $ionicModal, $ionicPopup, LoginService, $state, $ionicActionSheet, $ionicHistory ) {
+  .controller('ForumCtrl', function ($scope, ForumService, $sce, $stateParams, $ionicModal, $ionicPopup, LoginService, $state, $ionicActionSheet, $ionicHistory, SearchService) {
 
     $scope.username = window.localStorage.getItem('username');
     $scope.mail = window.localStorage.getItem('mail');
@@ -1856,11 +1856,6 @@ angular.module('ionicDessiApp.controllers', [])
       });
     };
 
-    $scope.updateSelectedIndex = function(channelname) {
-      $scope.selectedSideIndex = channelname;
-      $scope.$apply();
-    };
-
     $scope.logout = function() {
 
       window.localStorage.removeItem('userid');
@@ -1873,6 +1868,38 @@ angular.module('ionicDessiApp.controllers', [])
       });
 
       $state.go('home');
+
+    };
+
+    //SEARCH
+
+    $ionicModal.fromTemplateUrl('templates/globalSearchForum.html', {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function (modal) {
+      $scope.globalsearchmodal = modal;
+    });
+
+    // Triggered in the login modal to close it
+    $scope.closeGlobalSearch = function () {
+      $scope.globalsearchmodal.hide();
+    };
+
+    $scope.globalSearch = function() {
+        $scope.globalsearchmodal.show();
+    };
+
+    $scope.doGlobalSearch = function (textToSearch) {
+
+      if(textToSearch != '') {
+        SearchService.forumsearch(textToSearch).then(
+          function (data) {
+            $scope.globalSearchResult = data;
+          }, function (err) {
+            showErrorAlert(err.message);
+          }
+        )
+      }
 
     };
 

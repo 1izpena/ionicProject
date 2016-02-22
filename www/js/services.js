@@ -1155,7 +1155,7 @@ angular.module('ionicDessiApp')
 
         $http({
           method: 'POST',
-          url: API_BASE + '/api/v1/forumsearch',
+          url: API_BASE + 'api/v1/forumsearch',
           data: {key: request}
         }).then(
           function(response) {

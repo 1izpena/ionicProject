@@ -52,6 +52,7 @@ angular.module('ionicDessiApp.controllers', [])
           window.localStorage.setItem('username', res.data.username);
           window.localStorage.setItem('token', res.data.token);
           window.localStorage.setItem('userid', res.data.id);
+          window.localStorage.setItem('mail', res.data.mail);
           $scope.loginmodal.hide();
           $state.go('chat.channel');
         }, function (res) {
@@ -140,7 +141,7 @@ angular.module('ionicDessiApp.controllers', [])
 
   })
 
-  .controller('ChatCtrl', function ($scope, $state, $ionicHistory, GroupsService, ChatService, $ionicPopup, Socket, $ionicScrollDelegate, $ionicLoading, $sce, $ionicModal, $ionicTabsDelegate, $ionicActionSheet, $ionicSideMenuDelegate) {
+  .controller('ChatCtrl', function ($scope, $state, $ionicHistory, GroupsService, ChatService, $ionicPopup, Socket, $ionicScrollDelegate, $ionicLoading, $sce, $ionicModal, $ionicTabsDelegate, $ionicActionSheet, $ionicSideMenuDelegate, md5, SearchService) {
 
     $scope.userid = window.localStorage.getItem('userid');
     $scope.username = window.localStorage.getItem('username');
@@ -160,13 +161,17 @@ angular.module('ionicDessiApp.controllers', [])
     $scope.showChannelSettings = false;
     $scope.showGroupSettings = false;
     $scope.state = $state;
-
+    $scope.searchModalClosed = true;
+    $scope.notifications = {};
+    $scope.globalSearchResult = [];
+    $scope.selectedIndex = 0;
 
     $scope.logout = function() {
 
       window.localStorage.removeItem('userid');
-      window.localStorage.removeItem('uername');
+      window.localStorage.removeItem('username');
       window.localStorage.removeItem('token');
+      window.localStorage.removeItem('mail');
 
       $ionicHistory.nextViewOptions({
         disableBack: true
@@ -180,6 +185,8 @@ angular.module('ionicDessiApp.controllers', [])
     Socket.emit('newChatConnection', {'userid': window.localStorage.getItem('userid')});
 
     $scope.updateActiveGroup = function (i) {
+
+
       $scope.activeGroup = i;
       if (i !== -1) {
         // Emitimos evento de selecion de grupo para notificaciones de usuarios coenctados al grupo
@@ -215,6 +222,7 @@ angular.module('ionicDessiApp.controllers', [])
     GroupsService.getChatInfo().then(function (data) {
         $scope.groups = data;
         createConnectedUserList();
+        createNotifications();
       }
       , function (err) {
         // Tratar el error
@@ -240,6 +248,21 @@ angular.module('ionicDessiApp.controllers', [])
       $scope.users = tempList;
     }
 
+    function createNotifications() {
+      for(var i = 0; i<$scope.groups.length ; i++) {
+        $scope.notifications[$scope.groups[i].id] = 0;
+        for(var j = 0 ;  j<$scope.groups[i].publicChannels.length ; j++){
+          $scope.notifications[$scope.groups[i].publicChannels[j].id] = 0;
+        }
+        for(var k = 0; k<$scope.groups[i].privateChannels.length ; k++) {
+          $scope.notifications[$scope.groups[i].privateChannels[k].id] = 0;
+        }
+        for(var l = 0; l<$scope.groups[i].users.length ; l++) {
+          $scope.notifications[$scope.groups[i].users[l].id] = 0;
+        }
+      }
+    }
+
     ChatService.getInvitations().then(function (data) {
         $scope.invitations = data;
       }
@@ -252,6 +275,7 @@ angular.module('ionicDessiApp.controllers', [])
       window.localStorage.removeItem('username');
       window.localStorage.removeItem('token');
       window.localStorage.removeItem('userid');
+      window.localStorage.removeItem('mail');
 
       $state.go('home');
     };
@@ -282,11 +306,15 @@ angular.module('ionicDessiApp.controllers', [])
 
     $scope.selectChannel = function (index, type) {
       if (type === 'private') {
-        $scope.activeChannel = $scope.groups[$scope.activeGroup].privateChannels[index]
+        $scope.activeChannel = $scope.groups[$scope.activeGroup].privateChannels[index];
+        $scope.notifications[$scope.groups[$scope.activeGroup].id] = $scope.notifications[$scope.groups[$scope.activeGroup].id]-$scope.notifications[$scope.groups[$scope.activeGroup].privateChannels[index].id];
+        $scope.notifications[$scope.groups[$scope.activeGroup].privateChannels[index].id] = 0;
         // Emitimos evento de selecion de canal para recibir nuevos mensajes
         Socket.emit('selectChannel', {'channelid': $scope.groups[$scope.activeGroup].privateChannels[index].id});
       } else {
         $scope.activeChannel = $scope.groups[$scope.activeGroup].publicChannels[index];
+        $scope.notifications[$scope.groups[$scope.activeGroup].id] = $scope.notifications[$scope.groups[$scope.activeGroup].id]-$scope.notifications[$scope.groups[$scope.activeGroup].publicChannels[index].id];
+        $scope.notifications[$scope.groups[$scope.activeGroup].publicChannels[index].id] = 0;
         // Emitimos evento de selecion de canal para recibir nuevos mensajes
         Socket.emit('selectChannel', {'channelid': $scope.groups[$scope.activeGroup].publicChannels[index].id});
       }
@@ -325,7 +353,7 @@ angular.module('ionicDessiApp.controllers', [])
 
       if (messageType == 'NEW_ANSWER') {
         answerData = getAnswerData(internalMessage);
-        messageText = "<strong>"+answerData.answerUser + "</strong> add new answer for <a class=\"question-link\" ng-click=\"gotoAnchor('" + answerData.questionId + "')\">"+answerData.questionTitle+"</a>";
+        messageText = "<strong>"+answerData.answerUser + "</strong> added a new answer for a <a class=\"question-link\" ng-click=\"gotoAnchor('" + answerData.questionId + "')\">"+answerData.questionTitle+"</a>";
       }
 
       return messageText;
@@ -408,6 +436,12 @@ angular.module('ionicDessiApp.controllers', [])
     }
 
     $scope.searchDirectChannel = function (member) {
+
+      $scope.notifications[$scope.groups[$scope.activeGroup].id] = $scope.notifications[$scope.groups[$scope.activeGroup].id]-$scope.notifications[member.id];
+      $scope.notifications[member.id] = 0;
+
+      $scope.showChannelSettings == false;
+      $scope.showGroupSettings == false;
 
       var userid = window.localStorage.getItem('userid');
       var groupid = $scope.groups[$scope.activeGroup].id;
@@ -638,10 +672,12 @@ angular.module('ionicDessiApp.controllers', [])
     };
 
     $scope.highlight = function (text, search) {
-      if (!search) {
-        return $sce.trustAsHtml(text);
+      if(text != undefined) {
+        if (!search) {
+          return $sce.trustAsHtml(text);
+        }
+        return $sce.trustAsHtml(text.replace(new RegExp(search, 'gi'), '<span class="highlightedText">$&</span>'));
       }
-      return $sce.trustAsHtml(text.replace(new RegExp(search, 'gi'), '<span class="highlightedText">$&</span>'));
     };
 
     $scope.leaveGroupConfirm = function () {
@@ -800,11 +836,13 @@ angular.module('ionicDessiApp.controllers', [])
 
 
     $scope.closeSearch = function() {
+      $scope.searchModalClosed = true;
       $scope.searchmodal.hide();
     };
 
 
     $scope.search = function() {
+      $scope.searchModalClosed = false;
       $scope.searchmodal.show();
       ChatService.getSystemUsers().then(
         function(data) {
@@ -819,7 +857,7 @@ angular.module('ionicDessiApp.controllers', [])
 
       GroupsService.inviteUserToGroup(user, $scope.groups[$scope.activeGroup]).then(
         function(data) {
-          showToast('User added successfully to the group', $ionicLoading);
+          showToast('User invited successfully to the group', $ionicLoading);
         }, function(err) {
           showErrorAlert(err.message);
         }
@@ -849,11 +887,13 @@ angular.module('ionicDessiApp.controllers', [])
     };
 
     $scope.isInGroup = function(user) {
-      var tempUsers = $scope.groups[$scope.activeGroup].users;
-      if(tempUsers !== undefined) {
-        for (var i = 0; i < tempUsers.length; i++) {
-          if (tempUsers[i].id === user.id) {
-            return true;
+      if(!$scope.searchModalClosed) {
+        var tempUsers = $scope.groups[$scope.activeGroup].users;
+        if (tempUsers !== undefined) {
+          for (var i = 0; i < tempUsers.length; i++) {
+            if (tempUsers[i].id === user.id) {
+              return true;
+            }
           }
         }
       }
@@ -970,7 +1010,7 @@ angular.module('ionicDessiApp.controllers', [])
     };
 
     // Open the login modal
-    $scope.newQuestion = function () {
+      $scope.newQuestion = function () {
       if(window.localStorage.getItem('token') != undefined) {
         $scope.newquestionmodal.show();
       } else {
@@ -1193,11 +1233,103 @@ angular.module('ionicDessiApp.controllers', [])
     };
 
     //Gestion de recepcion de sockets
+    $scope.lastNotificationId = 1;
 
     Socket.on('newMessage', function (data) {
-      $scope.messagess.push(data);
+      var messageGroupName = getGroup(data.groupid);
+      //var notificationId = getNotificationId();
+      if(($scope.activeChannel != null && data.message.channel.id === $scope.activeChannel.id) || ($scope.activeChannel != null && data.message.channel.channelType == 'DIRECT' && data.message.channel.channelName == $scope.activeChannel.channelName.split('-')[1]+'-'+$scope.activeChannel.channelName.split('-')[0])) {
+        $scope.messagess.push(data.message);
+      } else {
+        $scope.notifications[data.groupid]++;
+        var groupElem = document.getElementById(data.groupid+'-badge');
+        groupElem.className = 'badge badge-assertive shake';
+        setTimeout(function(){
+          groupElem.className = 'badge badge-assertive';
+        }, 1000);
+        //NOTIFICATION
+        cordova.plugins.notification.local.schedule({
+          id: notificationId,
+          title: messageGroupName+" > "+data.message.channel.channelName,
+          text: '@'+data.message.user.username+': '+data.message.text
+        });
+        console.log('**************************************************Nuevo Mensaje!!!!! '+data.message.text);
+        if(data.message.channel.channelType == 'DIRECT'){
+          $scope.notifications[data.message.user.id]++;
+          var userElem = document.getElementById(data.message.user.id+'-badge');
+          userElem.className = 'badge badge-assertive shake';
+          setTimeout(function(){
+            userElem.className = 'badge badge-assertive';
+          }, 1000);
+
+        } else {
+          //NOTIFICATION
+          cordova.plugins.notification.local.schedule({
+            id: notificationId,
+            title: messageGroupName+" > "+data.message.channel.channelName+" > "+data.message.user.username,
+            text: '@'+data.message.user.username+': '+data.message.text
+          });
+          console.log('***********************************************************Nuevo Mensaje!!!!! '+data.message.text);
+          $scope.notifications[data.message.channel.id]++;
+          var channelElem = document.getElementById(data.message.channel.id+'-badge');
+          channelElem.className = 'badge badge-assertive shake';
+          setTimeout(function(){
+            channelElem.className = 'badge badge-assertive';
+          }, 1000);
+        }
+      }
       $scope.$apply();
     });
+
+    function getGroup(id) {
+      for(var i = 0 ; i<$scope.groups.length ; i++) {
+        if($scope.groups[i].id == id) {
+          return $scope.groups[i].groupName;
+          break;
+        }
+      }
+    }
+
+    function getChannel(groupid, channelid, type) {
+      for(var i = 0 ; i<$scope.groups.length ; i++) {
+        if($scope.groups[i].id == groupid) {
+          if(type == 'PUBLIC') {
+            for (var j = 0; j < $scope.groups.publicChannels.length; j++){
+              if($scope.groups.publicChannels[j].id == channelid){
+                return $scope.groups.publicChannels[j].channelName;
+              }
+            }
+          } else if(type == 'PRIVATE') {
+            for (var j = 0; j < $scope.groups.privateChannels.length; j++){
+              if($scope.groups.privateChannels[j].id == channelid){
+                return $scope.groups.privateChannels[j].channelName;
+              }
+            }
+          } else if(type == 'DIRECT') {
+            return 'isDirect';
+          }
+        }
+      }
+    }
+
+    function getNotificationId() {
+      cordova.plugins.notification.local.getAllIds(function (ids) {
+        if (ids.length == 0) {
+          $scope.lastNotificationId = 1;
+          return 1;
+        } else if(ids.length == 10) {
+          if($scope.lastNotificationId == 10){
+            $scope.lastNotificationId = 1;
+          }else {
+            $scope.lastNotificationId++;
+          }
+          return $scope.lastNotificationId;
+        } else {
+          $scope.lastNotificationId = ids.length;
+          return ids.length;
+        }
+      });
+    }
 
     Socket.on('newQuestionAnswer', function (data) {
       var message = data;
@@ -1380,6 +1512,12 @@ angular.module('ionicDessiApp.controllers', [])
     //recibir evento de canal publico eliminado
     Socket.on('deletedPublicChannel', function (data) {
       console.log("deletedPublicChannelInGroup receive from server");
+      if($scope.activeChannel != null && $scope.activeChannel.id == data.id) {
+        $scope.activeChannel = null;
+        $scope.showChannelSettings = false;
+        $scope.showGroupSettings = true;
+        showToast('This channel has been deleted', $ionicLoading);
+      }
       for (var i = 0; i < $scope.groups[$scope.activeGroup].publicChannels.length; i++) {
         if ($scope.groups[$scope.activeGroup].publicChannels[i].id == data.id) {
           $scope.groups[$scope.activeGroup].publicChannels.splice(i, 1);
@@ -1405,6 +1543,168 @@ angular.module('ionicDessiApp.controllers', [])
       }
     });
 
+    Socket.on('newGroupEvent', function (data) {
+      var messageGroupName = data.groupName;
+      //NOTIFICATION
+      $scope.notifications[data.groupid]++;
+      cordova.plugins.notification.local.schedule({
+        id: 1,
+        title: messageGroupName,
+        text: data.message
+      });
+      $scope.$apply();
+    });
+
+    //Eventos de canales listados y no conectados
+    Socket.on('newChannelEvent', function (data) {
+      var messageGroupName = data.groupName;
+      var messageChannelName = data.channelName;
+      //NOTIFICATION
+      cordova.plugins.notification.local.schedule({
+        id: 1,
+        title: messageChannelName,
+        text: data.message
+      });
+      $scope.$apply();
+    });
+
+    Socket.on('newMessageEvent', function (data) {
+      var messageGroupName = data.groupName;
+      var messageChannelName = data.channelName;
+
+      $scope.notifications[data.groupid]++;
+      $scope.$apply();
+      var groupElem = document.getElementById(data.groupid+'-badge');
+      groupElem.className = 'badge badge-assertive shake';
+      setTimeout(function(){
+        groupElem.className = 'badge badge-assertive';
+      }, 1000);
+      //NOTIFICATION
+      if(!!window.cordova) {
+        cordova.plugins.notification.local.schedule({
+          id: 1,
+          title: data.channelType === 'DIRECT' ? data.message.user.username : messageGroupName+" > "+messageChannelName,
+          text: '@' + data.message.user.username + ': ' + data.message.text
+        });
+      }
+      console.log('**************************************************Nuevo Mensaje!!!!! '+data.message.text);
+      if(data.message.channel.channelType == 'DIRECT'){
+        $scope.notifications[data.message.user.id]++;
+        $scope.$apply();
+        var userElem = document.getElementById(data.message.user.id+'-badge');
+        userElem.className = 'badge badge-assertive shake';
+        setTimeout(function(){
+          userElem.className = 'badge badge-assertive';
+        }, 1000);
+
+      } else {
+        $scope.notifications[data.message.channel.id]++;
+        $scope.$apply();
+        var channelElem = document.getElementById(data.message.channel.id+'-badge');
+        channelElem.className = 'badge badge-assertive shake';
+        setTimeout(function(){
+          channelElem.className = 'badge badge-assertive';
+        }, 1000);
+      }
+      $scope.$apply();
+    });
+    /*
+    cordova.plugins.notification.local.on("click", function (notification, state) {
+      $scope.notificationActiveText = notification.text;
+      $scope.notificationActive = false;
+    }, this);
+
+    cordova.plugins.notification.local.on("click", function (notification, state) {
+      $scope.notificationActive = false;
+    }, this);
+    */
+    //SEARCH
+
+    $ionicModal.fromTemplateUrl('templates/globalSearch.html', {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function (modal) {
+      $scope.globalsearchmodal = modal;
+    });
+
+    // Triggered in the login modal to close it
+    $scope.closeGlobalSearch = function () {
+      $scope.globalsearchmodal.hide();
+    };
+
+    $scope.globalSearch = function() {
+      if(window.localStorage.getItem('token') != undefined) {
+        $scope.globalsearchmodal.show();
+      } else {
+        $scope.login();
+      }
+    };
+
+    $scope.doGlobalSearch = function (textToSearch) {
+
+      if($scope.activeChannel != null && textToSearch != '') {
+        SearchService.chatsearch(textToSearch, $scope.activeChannel.id, $scope.groups[$scope.activeGroup].id).then(
+          function (data) {
+            $scope.globalSearchResult = data;
+            for(var i = 0 ; i<data.length ; i++) {
+              var tempid = data[i].source._user;
+              if($scope.activeChannel.type == 'public'){
+                for(var j = 0 ; j<$scope.groups[$scope.activeGroup].users.length ; j++) {
+                  if($scope.groups[$scope.activeGroup].users[j].id === tempid){
+                    $scope.globalSearchResult[i].source.user = $scope.groups[$scope.activeGroup].users[j];
+                    break;
+                  }
+                }
+              } else {
+                for (var k = 0; k < $scope.activeChannel.users.length ; k++) {
+                  if($scope.activeChannel.users[k].id === tempid) {
+                    $scope.globalSearchResult[i].source.user = $scope.activeChannel.users[k];
+                    break;
+                  }
+                }
+              }
+            }
+          }, function (err) {
+            showErrorAlert(err.message);
+          }
+        )
+      }
+
+    };
+
+    //Sidebar
+
+    $scope.showLogoutAction = function() {
+
+      // Show the action sheet
+      var hideSheet = $ionicActionSheet.show({
+        buttons: [],
+        destructiveText: '<i class="icon ion-power"></i>Logout',
+        titleText: $scope.username,
+        cancelText: 'Cancel',
+        cancel: function () {
+          // add cancel code..
+        },
+        buttonClicked: function (index) {
+          return true;
+        },
+        destructiveButtonClicked: function(){
+          $scope.logout();
+        }
+
+      });
+    };
+
+
+      //MD5
+
+    $scope.getHash = function (str) {
+      if(str != undefined) {
+        return md5.createHash(str);
+      }
+      return '';
+    };
+
     //Forum
 
     $scope.goToForum = function() {
@@ -1413,12 +1713,25 @@ angular.module('ionicDessiApp.controllers', [])
 
   })
 
-  .controller('ForumCtrl', function ($scope, ForumService, $sce, $stateParams, $ionicModal, $ionicPopup, LoginService, $state) {
+  .controller('ForumCtrl', function ($scope, ForumService, $sce, $stateParams, $ionicModal, $ionicPopup, LoginService, $state, $ionicActionSheet, $ionicHistory ) {
 
+    $scope.username = window.localStorage.getItem('username');
+    $scope.mail = window.localStorage.getItem('mail');
     $scope.questions = null;
     $scope.activeQuestion = null;
     $scope.activeQuestionIndex = -1;
     $scope.state = $state;
+    $scope.selected = 'latest';
+
+    $scope.goTo = function(where) {
+      if(where === 'latest') {
+        $state.go('forum.latest');
+      } else if(where === 'viewed') {
+        $state.go('forum.mostViewed');
+      } else if(where === 'voted') {
+        $state.go('forum.mostVoted');
+      }
+    };
 
     $scope.gotoChat = function(e) {
       if(window.localStorage.getItem('token') != undefined) {
@@ -1517,6 +1830,49 @@ angular.module('ionicDessiApp.controllers', [])
           showAlert(res.data.message);
         });
       }
+
+    };
+
+    //Sidebar
+
+    $scope.showLogoutAction = function() {
+
+      // Show the action sheet
+      var hideSheet = $ionicActionSheet.show({
+        buttons: [],
+        destructiveText: '<i class="icon ion-power"></i>Logout',
+        titleText: $scope.username,
+        cancelText: 'Cancel',
+        cancel: function () {
+          // add cancel code..
+        },
+        buttonClicked: function (index) {
+          return true;
+        },
+        destructiveButtonClicked: function(){
+          $scope.logout();
+        }
+
+      });
+    };
+
+    $scope.updateSelectedIndex = function(channelname) {
+      $scope.selectedSideIndex = channelname;
+      $scope.$apply();
+    };
+
+    $scope.logout = function() {
+
+      window.localStorage.removeItem('userid');
+      window.localStorage.removeItem('username');
+      window.localStorage.removeItem('token');
+      window.localStorage.removeItem('mail');
+
+      $ionicHistory.nextViewOptions({
+        disableBack: true
+      });
+
+      $state.go('home');
 
     };
 

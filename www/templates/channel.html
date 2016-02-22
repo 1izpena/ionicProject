@@ -17,8 +17,9 @@
 <ion-view>
   <ion-header-bar class="bar-subheader bar-stable" ng-show="activeGroup !== -1">
     <h5 class="title">
-      <span class="icon ion-android-contacts" ng-click="toggleGroupSettings()"> {{groups[activeGroup].groupName}} > </span>
-      <span class="icon ion-android-chat" ng-click="toggleChannelSettings()"> {{activeChannel.channelName || '...'}}</span>
+      <span class="icon ion-android-contacts settingsLabel" ng-class="showGroupSettings? 'activeSettings' : ''" ng-click="toggleGroupSettings()"> {{groups[activeGroup].groupName}}</span>
+      <span> > </span>
+      <span class="icon ion-android-chat settingsLabel" ng-class="showChannelSettings? 'activeSettings' : ''" ng-click="toggleChannelSettings()">{{activeChannel.channelName || '...'}}</span>
     </h5>
   </ion-header-bar>
   <ion-content id="messageContent" class=" has-subheader padding" ng-class="activeChannel==null && activeGroup == -1 && showChannelSettings == false && showGroupSettings == false ? 'has-header' : ''" delegate-handle="messageScroll">
@@ -41,9 +42,13 @@
           </div>
 
           <div class="item item-avatar">
+            <!--
             <img
               ng-src="http://placehold.it/50/{{(window.localStorage.getItem('userid')!=message.user.id)?'55C1E7':'FA6F57'}}/fff&text={{message.user.username | limitTo:2 | uppercase }}"
               alt="User Avatar" class="img-circle"/>
+              -->
+            <img ng-src="http://www.gravatar.com/avatar/{{getHash(message.user.mail)}}?s=30&d=identicon"
+                 alt="User Avatar" xclass="img-circle"/>
             <h2>
               <strong>
                 @{{message.user.username}}
@@ -163,9 +168,13 @@
           <ion-list>
           <div ng-repeat="user in groups[activeGroup].users | filter:searchText">
             <ion-item class="item item-avatar">
+              <!--
               <img
                 ng-src="http://placehold.it/50/{{(window.localStorage.getItem('userid')!=message.user.id)?'55C1E7':'FA6F57'}}/fff&text={{user.username | limitTo:2 | uppercase }}"
                 alt="User Avatar" class="img-circle"/>
+                -->
+              <img ng-src="http://www.gravatar.com/avatar/{{getHash(user.mail)}}?s=30&d=identicon"
+                   alt="User Avatar" xclass="img-circle"/>
               <div class="row">
                 <h2 class="col-90" ng-bind-html="highlight(user.username, searchText)">@{{user.username}}</h2>
                 <small class="col-10 assertive" ng-show="user.id == groups[activeGroup].admin.id">Admin</small>
@@ -195,7 +204,7 @@
       </div>
 
       <div class="list card">
-        <div class="item item-button-right"  ng-if="userid == groups[activeGroup].admin.id">
+        <div class="item item-button-right"  ng-if="userid == activeChannel.admin.id">
           <label class="item-input ">
             <i class="icon ion-edit placeholder-icon"></i>
             <input type="text" id="channelSettingsNameInput" name="settingsInput" placeholder="Channel Name" value={{activeChannel.channelName}} ng-focus="showSettingsNameButtons = true" ng-blur="showSettingsNameButtons = false" style="font-weight: bold;">
@@ -210,7 +219,7 @@
 
         </div>
 
-        <div class="item"  ng-if="userid != groups[activeGroup].admin.id">
+        <div class="item"  ng-if="userid != activeChannel.admin.id">
           <strong>
             {{activeChannel.channelName}}
           </strong>
@@ -244,16 +253,20 @@
               <i class="icon ion-ios-search placeholder-icon"></i>
               <input type="search" placeholder="Search" ng-model="searchText">
             </label>
-            <button ng-if="userid == groups[activeGroup].admin.id" class="button button-balanced  button-clear" ng-click="search()">
+            <button ng-if="userid == activeChannel.admin.id" class="button button-balanced  button-clear" ng-click="search()">
               Invite Users
             </button>
           </div>
           <ion-list>
             <div ng-repeat="user in activeChannel.users | filter:searchText">
               <ion-item class="item item-avatar">
+                <!--
                 <img
                   ng-src="http://placehold.it/50/{{(window.localStorage.getItem('userid')!=message.user.id)?'55C1E7':'FA6F57'}}/fff&text={{user.username | limitTo:2 | uppercase }}"
                   alt="User Avatar" class="img-circle"/>
+                  -->
+                <img ng-src="http://www.gravatar.com/avatar/{{getHash(user.mail)}}?s=30&d=identicon"
+                     alt="User Avatar" xclass="img-circle"/>
                 <div class="row">
                   <h2 class="col-90" ng-bind-html="highlight(user.username, searchText)">@{{user.username}}</h2>
                   <small class="col-10 assertive" ng-show="activeChannel.admin.id == user.id">Admin</small>
@@ -286,10 +299,13 @@
   <div class="bar bar-footer bar-stable item-input-inset footer-item-input-insert">
   -->
   <ion-footer-bar class="bar-stable item-input-inset footer-item-input-insert">
-    <button class="button button-clear button-balanced icon ion-plus-circled" ng-click="showActionSheet()">
+    <div class="buttons">
+    <button class=" button button-small button-balanced" ng-click="showActionSheet()">
+      <i class="icon ion-plus"></i>
     </button>
+    </div>
     <label class="item-input-wrapper">
-      <input type="text" placeholder="Message" ng-model="text">
+      <input type="text" placeholder="Type your message here..." ng-model="text">
     </label>
     <button class="button button-clear button-positive" ng-show="activeChannel!=null && activeGroup != -1 && showChannelSettings == false && showGroupSettings == false && text != ''" ng-click="sendText(text); text='';">
       <strong>Send</strong>

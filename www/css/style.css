@@ -233,6 +233,7 @@ and (orientation: portrait) {
 
   .imageContainer {
     margin: 20% auto;
+    margin-bottom: 3%;
   }
 
 
@@ -391,4 +392,150 @@ html,body{
 
 .file {
   display: none;
+}
+
+/* Notifications */
+
+span[id$='badge'].shake {
+  animation: shake 0.82s cubic-bezier(.36,.07,.19,.97) both;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+@keyframes shake {
+  10%, 90% {
+    transform: translate3d(-1px, 0, 0);
+  }
+
+  20%, 80% {
+    transform: translate3d(2px, 0, 0);
+  }
+
+  30%, 50%, 70% {
+    transform: translate3d(-4px, 0, 0);
+  }
+
+  40%, 60% {
+    transform: translate3d(4px, 0, 0);
+  }
+}
+
+
+/* Nuevos Estilos */
+
+@font-face{
+  font-family: Oswald;
+  src: url('../fonts/Oswald-Regular.ttf');
+}
+
+body {
+  font-family: 'Oswald', sans-serif;
+}
+
+.homeView {
+  background: rgba(0, 0, 0, 0) !important;
+}
+
+video#bgvid {
+
+  position: fixed;
+  right: 0;
+  bottom: 0;
+
+  min-width: 100%;
+  min-height: 100%;
+
+  width: auto;
+  height: auto;
+  z-index: -100;
+
+  /*background: url(polina.jpg) no-repeat;*/
+
+  background-size: cover;
+}
+
+#filter{
+  position: fixed;
+  top:0px;
+  left:0px;
+  z-index: -8;
+  width: 100%;
+  min-height: 100%;
+  background: rgba(0, 37, 128, 0.5);
+  background-image: url('../img/patern.png');
+
+}
+
+.wrapper{
+  position: absolute;
+  width:100%;
+}
+
+.titleContainer h1 {
+  font-family: 'Oswald', sans-serif;
+  color: #163B5A;
+}
+
+.sideItem {
+  background-color: transparent;
+  color: white;
+  border-bottom: 0;
+  border-top: 0;
+}
+
+.settingsLabel.activeSettings {
+  background-color: lightblue;
+  -webkit-border-radius: 2px;
+  -moz-border-radius: 2px;
+  border-radius: 2px;
+  -webkit-transition: background-color 1s linear, border-radius 1s linear;
+  -moz-transition: background-color 1s, border-radius 1s linear;
+  -ms-transition: background-color 1s, border-radius 1s linear;
+  -o-transition: background-color 1s, border-radius 1s linear;
+  transition: background-color 1s, border-radius 1s linear;
+}
+
+.settingsLabel {
+  background-color: inherit;
+  -webkit-border-radius: 0;
+  -moz-border-radius: 0;
+  border-radius: 0;
+  -webkit-transition: background-color 1s linear, border-radius 1s linear;
+  -moz-transition: background-color 1s, border-radius 1s linear;
+  -ms-transition: background-color 1s, border-radius 1s linear;
+  -o-transition: background-color 1s, border-radius 1s linear;
+  transition: background-color 1s, border-radius 1s linear;
+}
+
+.sideLogo {
+  padding: 5vw;
+}
+
+.sideLogoImg {
+  margin: auto auto;
+  width: 100%;
+  height: 100%;
+}
+
+.sideUserName {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toggleTitleRight {
+  margin-left: 2vw;
+}
+
+.toggleTitleLeft {
+  margin-right: 2vw;
+}
+
+.sideUserNameMain {
+  font-size: 100%;
+}
+
+.activeTile {
+  background: #219161;
 }

@@ -4,7 +4,7 @@
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
 // 'starter.controllers' is found in controllers.js
-angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDessiApp.config', 'ngAnimate', 'angularMoment', 'ngSanitize', 'textAngular', 'ngTagsInput', 'ngFileUpload'])
+angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDessiApp.config', 'ngAnimate', 'angularMoment', 'ngSanitize', 'textAngular', 'ngTagsInput', 'ngFileUpload', 'angular-md5'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {
@@ -56,6 +56,7 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
     })
     .state('forum.latest', {
       url: "/latest",
+      cache: false,
       views: {
         'latest-tab': {
           templateUrl: "templates/latest.html"
@@ -64,6 +65,7 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
     })
     .state('forum.mostViewed', {
       url: "/mostviewed",
+      cache: false,
       views: {
         'mostViewed-tab': {
           templateUrl: "templates/mostViewed.html"
@@ -72,6 +74,7 @@ angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDes
     })
     .state('forum.mostVoted', {
       url: "/mostvoted",
+      cache: false,
       views: {
         'mostVoted-tab': {
           templateUrl: "templates/mostVoted.html"

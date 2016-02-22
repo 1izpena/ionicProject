@@ -43,85 +43,123 @@
 </ion-content>
   -->
   <ion-side-menus enable-menu-with-back-views="false">
+
+
+
     <ion-side-menu-content>
-      <ion-nav-bar class="bar-balanced">
+      <ion-nav-bar class="bar-calm">
         <ion-nav-back-button>
         </ion-nav-back-button>
 
         <ion-nav-buttons side="left">
-          <button menu-toggle="left" class="button button-icon icon"><img src="img/ionic.png" width="30" height="30" /></button>
+          <button menu-toggle="left" class="button button-icon icon"><img src="img/meanstack-logo.png" width="30" height="30" /></button>
         </ion-nav-buttons>
 
         <ion-nav-title>
           <h1 class="title">
-            <span class="inactiveTitle">
-              Forum
-            </span>
-            <label class="toggle toggle-calm toggle-middle" ng-click="goToForum();">
-              <input type="checkbox" checked>
-              <div class="track">
-                <div class="handle"></div>
-              </div>
-            </label>
             Chat
           </h1>
         </ion-nav-title>
 
         <ion-nav-buttons side="right">
+          <button class="button button-icon icon ion-search" ng-click="globalSearch()" ng-show="activeChannel != null"></button>
           <button menu-toggle="right" class="button button-icon icon ion-android-more-horizontal"></button>
         </ion-nav-buttons>
       </ion-nav-bar>
 
       <ion-nav-view name="menuContent">
-        <ion-content>
 
-          <label class="item item-input">
-            <input type="text" placeholder="First Name">
-          </label>
-        </ion-content>
       </ion-nav-view>
     </ion-side-menu-content>
 
     <ion-side-menu side="left">
-      <ion-header-bar class="bar-positive">
-        <h1 class="title">{{username}}</h1>
+
+      <div id="filter"></div>
+      <!--
+      <ion-header-bar class="bar-clear">
+
+        <h1 class="title">
+          <img src="img/full-white-mini.png" width="180" height="60"/> <br>
+          {{username}}
+        </h1>
         <div class="buttons">
           <button class="button icon ion-log-out button-assertive" ng-click="logout()"></button>
         </div>
       </ion-header-bar>
+      -->
       <ion-content>
+
+        <!-- headers -->
+        <div class="sideLogo">
+          <img class="sideLogoImg" src="img/full-white-mini.png" width="180" height="60"/>
+        </div>
+        <div class="sideUserName sideItem">
+          <span class="inactiveTitle toggleTitleLeft">
+              Forum
+            </span>
+          <label class="toggle toggle-calm toggle-middle" ng-click="goToForum();">
+            <input type="checkbox" checked>
+            <div class="track">
+              <div class="handle"></div>
+            </div>
+          </label>
+          <span class="toggleTitleRight">
+            Chat
+          </span>
+        </div>
+        <div class="item sideItem sideUserName" >
+          <img ng-if="username !== undefined" ng-src="http://www.gravatar.com/avatar/{{getHash(window.localStorage.getItem('mail'))}}?s=30&d=identicon"
+               alt="User Avatar" xclass="img-circle" style="border-radius: 100%;"/>
+          <div>
+            <label class="col sideUserNameMain" ng-if="username !== undefined" ng-click="showLogoutAction()"><strong>{{'@'+username}}</strong> <span class="icon ion-android-arrow-dropdown"></span> </label>
+            <button ng-if="username == undefined" ng-click="login()" class="button button-positive button-block">Login</button>
+          </div>
+        </div>
+
+        <!-- Item List -->
         <ion-list>
           <!-- Invitations -->
           <ion-item class="item-divider item-icon-right item-energized" ng-show="invitations.length > 0" ng-click="toggleInvitations()">
             Invitations
+            <span class="badge badge-assertive">{{invitations.length}}</span>
           </ion-item>
 
-          <div class="invitations" ng-show="showInvitations">
+          <div class="invitations list" ng-show="showInvitations">
             <div ng-repeat="invitation in invitations">
-              <ion-item>
-                <span class="icon ion-alert-circled"> </span>
+              <ion-item class="sideItem item-icon-left item-button-right">
+                <i class="icon ion-alert-circled"> </i>
                 {{invitation.groupName}}
-                <ion-option-button class="button-balanced" ng-click="acceptInvitation(invitation, $index)">Yes</ion-option-button>
-                <ion-option-button class="button-assertive" ng-click="refuseInvitation(invitation, $index)">No</ion-option-button>
+                <div class="buttons">
+                  <button class="button button-balanced button-small" ng-click="acceptInvitation(invitation, $index)">
+                    <i class="icon ion-thumbsup"></i>
+                  </button>
+                  <button class="button button-assertive button-small" ng-click="refuseInvitation(invitation, $index)">
+                    <i class="icon ion-thumbsdown"></i>
+                  </button>
+                </div>
               </ion-item>
             </div>
           </div>
           <!-- Groups -->
-          <ion-item ng-click="updateActiveGroup(-1); unhideChannels(false); unhideUsers(false);" class="item-divider item-divider-principal item-icon-right">
+          <ion-item ng-click="updateActiveGroup(-1); unhideChannels(false); unhideUsers(false);" class="item-positive item-divider item-divider-principal item-icon-right">
+            <i class="icon ion-arrow-up-a"></i>
             Groups
-            <span class="icon ion-plus-circled" ng-click="showNewGroupPopup()"></span>
+            <div class="item-icon-right">
+              <i class="icon ion-plus-circled" ng-click="showNewGroupPopup()"></i>
+            </div>
           </ion-item>
 
           <div class="groups" ng-show="showGroups">
             <div ng-repeat="group in groups">
-              <ion-item ng-click="updateActiveGroup($index); unhideChannels(true); unhideUsers(true);" ng-show="activeGroup === $index || activeGroup === -1">
+              <ion-item class="sideItem" ng-click="updateActiveGroup($index); unhideChannels(true); unhideUsers(true);" ng-show="activeGroup === $index || activeGroup === -1">
                 <span class="icon ion-android-contacts"> </span>
                 {{group.groupName}}
+                <span class="badge badge-assertive" id="{{group.id}}-badge" ng-show="notifications[group.id] > 0">{{notifications[group.id]}}</span>
               </ion-item>
             </div>
           </div>
           <!-- Channels -->
-          <ion-item class="item-divider item-divider-principal item-icon-right" ng-show="showChannels">
+          <ion-item class="item-divider item-positive item-icon-right" ng-show="showChannels">
             Channels
           </ion-item>
 
@@ -133,9 +171,10 @@
           <div class="channels" ng-show="showChannels">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index" ng-repeat="channels in group.publicChannels">
-                <ion-item ng-click="clearMessages(); selectChannel($index, 'public');" menu-close>
+                <ion-item class="sideItem" ng-click="clearMessages(); selectChannel($index, 'public');" menu-close>
                   <span class="icon ion-android-chat"> </span>
                   {{channels.channelName}}
+                  <span class="badge badge-assertive" id="{{channels.id}}-badge" ng-show="notifications[channels.id] > 0">{{notifications[channels.id]}}</span>
                 </ion-item>
               </div>
             </div>
@@ -149,16 +188,17 @@
           <div class="channels" ng-show="showChannels">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index" ng-repeat="channels in group.privateChannels">
-                <ion-item ng-click="clearMessages(); selectChannel($index, 'private');" menu-close>
+                <ion-item class="sideItem" ng-click="clearMessages(); selectChannel($index, 'private');" menu-close>
                   <span class="icon ion-android-chat"> </span>
                   {{channels.channelName}}
+                  <span class="badge badge-assertive" id="{{channels.id}}-badge" ng-show="notifications[channels.id] > 0">{{notifications[channels.id]}}</span>
                 </ion-item>
               </div>
             </div>
           </div>
 
           <!-- Users -->
-          <ion-item class="item-divider item-divider-principal item-icon-right" ng-show="showUsers">
+          <ion-item class="item-divider item-positive item-icon-right" ng-show="showUsers">
             Users
             <!--
             <span class="icon ion-plus-circled" ng-click="showInviteUserPopup()"></span>
@@ -169,9 +209,10 @@
           <div class="users" ng-show="showUsers">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index" ng-repeat="user in group.users">
-                <ion-item ng-click="searchDirectChannel(user)" ng-show="user.id != userid" menu-close>
+                <ion-item class="sideItem" ng-click="searchDirectChannel(user)" ng-show="user.id != userid" menu-close>
                   <span class="icon ion-ios-checkmark" ng-class="users[user.id] ? 'balanced' : ''"> </span>
                   {{user.username}}
+                  <span class="badge badge-assertive" id="{{user.id}}-badge" ng-show="notifications[user.id] > 0">{{notifications[user.id]}}</span>
                 </ion-item>
               </div>
             </div>

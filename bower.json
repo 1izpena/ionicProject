@@ -12,7 +12,7 @@
     "ng-tags-input": "~3.0.0",
     "rangy": "~1.3.0",
     "ng-file-upload": "~11.2.3",
-    "downgularjs": "downgularJS#*"
+    "angular-md5": "~0.1.10"
   },
   "resolutions": {
     "moment": ">=2.8.0 <2.11.0"

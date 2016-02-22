@@ -20,6 +20,7 @@ angular.module('ionicDessiApp')
           window.localStorage.removeItem('userid');
           window.localStorage.removeItem('username');
           window.localStorage.removeItem('token');
+          window.localStorage.removeItem('mail');
           $location.path('/');
         }
       },
@@ -92,6 +93,7 @@ angular.module('ionicDessiApp')
       deleteGroup : deleteGroup,
       editChannel: editChannel,
       addUserToChannel: addUserToChannel,
+      getChannelMembers: getChannelMembers,
       deleteUserFromChannel: deleteUserFromChannel,
       unsubscribeFromChannel: unsubscribeFromChannel,
       deleteChannel: deleteChannel
@@ -238,6 +240,39 @@ angular.module('ionicDessiApp')
       }).success(function(data) {
         //console.log("data");
         //console.log(data);
+        angular.forEach(data.privateChannels, function(channel){
+          // Here, the lang object will represent the lang you called the request on for the scope of the function
+          getChannelMembers(data.id, channel.id).then(
+            function(members) {
+              channel.admin = members.data.admin;
+            }, function(err) {
+              console.log(err.message);
+            }
+          );
+        });
+        angular.forEach(data.publicChannels, function(channel){
+          // Here, the lang object will represent the lang you called the request on for the scope of the function
+          getChannelMembers(data.id, channel.id).then(
+            function(members) {
+              channel.admin = members.data.admin;
+            }, function(err) {
+              console.log(err.message);
+            }
+          );
+        });
+        /*
+        for(var i = 0 ; i<data.privateChannels.length ; i++){
+          getChannelMembers(data.id, data.privateChannels[i].id).then(
+            function(data) {
+              j =
+              j++;
+            }, function(err) {
+              console.log(err.message);
+            }
+          );
+          data.privateChannels[i].admin = members.admin;
+        }
+        */
         defered.resolve(data);
       })
         .error(function(err) {
@@ -438,19 +473,20 @@ angular.module('ionicDessiApp')
       var defered = $q.defer();
       var promise = defered.promise;
       var userid = window.localStorage.getItem('userid');
+      console.log("entro en edit channel");
       $http({
         method: 'put',
-        headers: {'x-access-token': window.localStorage.getItem('token')},
-        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid,
-        data: data
-      }).then(
-        function(response) {
-          defered.resolve(response);
-        },
-        function(error){
-          defered.reject(error);
-        }
-      );
+        headers: {'x-access-token': window.localStorage.getItem('token'), 'Content-Type': 'application/x-www-form-urlencoded'},
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid +'/channels/'+channelid,
+        data: 'channelName='+data
+
+      }).success(function(data) {
+        defered.resolve(data);
+      })
+        .error(function(err) {
+          defered.reject(err)
+        });
+
       return promise;
     }
 
@@ -458,7 +494,7 @@ angular.module('ionicDessiApp')
       var defered = $q.defer();
       var promise = defered.promise;
       var userid = window.localStorage.getItem('userid');
-      var userid1 = userAdd;
+      var userid1 = userAdd.id;
       $http({
         method: 'post',
         headers: {'x-access-token': window.localStorage.getItem('token')},
@@ -475,11 +511,30 @@ angular.module('ionicDessiApp')
       return promise;
     }
 
+    function getChannelMembers (groupid,channelid) {
+      var defered = $q.defer();
+      var promise = defered.promise;
+      var userid = window.localStorage.getItem('userid');
+      $http({
+        method: 'get',
+        headers: {'x-access-token': window.localStorage.getItem('token')},
+        url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid+'/users'
+      }).then(
+        function(response) {
+          defered.resolve(response);
+        },
+        function(error){
+          defered.reject(error);
+        }
+      );
+      return promise;
+    }
+
     function deleteUserFromChannel (groupid,channelid,data) {
       var defered = $q.defer();
       var promise = defered.promise;
       var userid = window.localStorage.getItem('userid');
-      var userid1 = data;
+      var userid1 = data.id;
       $http({
         method: 'delete',
         headers: {'x-access-token': window.localStorage.getItem('token')},
@@ -548,7 +603,8 @@ angular.module('ionicDessiApp')
         acceptInvitation: acceptInvitation,
         refuseInvitation: refuseInvitation,
         getSystemUsers : getSystemUsers,
-        postAnswer: postAnswer
+        postAnswer: postAnswer,
+        publishMessage: publishMessage
       };
 
       function uploadFileS3 (data) {
@@ -676,7 +732,7 @@ angular.module('ionicDessiApp')
         var defered = $q.defer();
         var promise = defered.promise;
 
-        $http.get('http://localhost:3000/api/v1/users/'+window.localStorage.getItem('userid') +'/chat/invitations', {
+        $http.get(API_BASE + 'api/v1/users/'+window.localStorage.getItem('userid') +'/chat/invitations', {
           headers: {'x-access-token': window.localStorage.getItem('token')}
         }).success(function(data) {
           defered.resolve(data);
@@ -770,6 +826,33 @@ angular.module('ionicDessiApp')
         );
 
         return promise;
+      }
+
+      function publishMessage (data) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+
+        var userid = window.localStorage.getItem('userid');
+        var groupid= data.groupid;
+        var channelid=data.channelid;
+        var messageid=data.messageid;
+
+        $http({
+          method: 'post',
+          headers: {'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid+'/channels/'+channelid+'/messages/'+messageid+'/publish',
+          data: { tags: data.tags }
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+
+        return promise;
+
       }
 
     }])
@@ -1057,6 +1140,98 @@ angular.module('ionicDessiApp')
 
     }])
 
+  .service('SearchService', ['$http', '$state', '$q', 'API_BASE',
+    function($http, $state, $q, API_BASE){
+
+      return{
+        forumsearch: forumsearch,
+        chatsearch: chatsearch
+      };
+
+      function forumsearch(request)
+      {
+        var defered = $q.defer();
+        var promise = defered.promise;
+
+        $http({
+          method: 'POST',
+          url: API_BASE + '/api/v1/forumsearch',
+          data: {key: request}
+        }).then(
+          function(response) {
+            if(response.data.hits.hits[0]){
+
+              var hits = (Object.keys(response.data.hits.hits).length)-1;
+              var data = [];
+
+              for (var cont=0;cont<=hits;cont++){
+                data.push(response.data.hits.hits[ cont ]._source);
+              }
+
+            }else{
+              data=({error:"No hay coincidencias"});
+            }
+
+            defered.resolve(data);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+
+      function chatsearch(text, channelid, groupid) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+        var userid = window.localStorage.getItem('userid');
+
+        $http({
+          method: 'POST',
+          headers: {'x-access-token': window.localStorage.getItem('token'), 'Content-Type': 'application/x-www-form-urlencoded'},
+          url: API_BASE + 'api/v1/users/'+userid+'/chat/groups/'+groupid +'/channels/'+channelid +'/search/',
+          data: 'key='+text
+        }).then(
+          function(response) {
+
+            if(response.data.hits.hits.length > 0 ){
+
+
+              var hits = (Object.keys(response.data.hits.hits).length)-1;
+              var arrayText = [];
+
+
+              for (var cont = 0; cont <= hits; cont++){
+
+                var obj = {};
+                obj.id = response.data.hits.hits[ cont ]._id;
+                obj.source = response.data.hits.hits[ cont ]._source;
+                arrayText.push(obj);
+              }
+
+
+            } else {
+              //console.log(response.data.hits);
+              console.log("no hay coincidencias");
+              arrayText = ({error:"No hay coincidencias"});
+
+            }
+            //console.log(data);
+            defered.resolve(arrayText);
+
+          },
+          function(error){
+            console.log("hay error");
+            defered.reject(error);
+          }
+        );
+        return promise;
+      };
+
+    }])
+
+  //FACTORIES
+
   .factory('Socket', ['API_BASE', function(API_BASE) {
     return io.connect(API_BASE);
   }])
@@ -1071,6 +1246,7 @@ angular.module('ionicDessiApp')
           window.localStorage.removeItem('userid');
           window.localStorage.removeItem('username');
           window.localStorage.removeItem('token');
+          window.localStorage.removeItem('mail');
           state.go('home', {message:response.data.message});
 
         }
@@ -1113,4 +1289,26 @@ angular.module('ionicDessiApp')
         });
       }
     };
-  });
+  })
+
+  .directive('bindHtmlCompile', ['$compile', function ($compile) {
+    return {
+      restrict: 'A',
+      link: function (scope, element, attrs) {
+        scope.$watch(function () {
+          return scope.$eval(attrs.bindHtmlCompile);
+        }, function (value) {
+          // In case value is a TrustedValueHolderType, sometimes it
+          // needs to be explicitly called into a string in order to
+          // get the HTML string.
+          element.html(value && value.toString());
+          // If scope is provided use it, otherwise use parent scope
+          var compileScope = scope;
+          if (attrs.bindHtmlScope) {
+            compileScope = scope.$eval(attrs.bindHtmlScope);
+          }
+          $compile(element.contents())(compileScope);
+        });
+      }
+    };
+  }]);

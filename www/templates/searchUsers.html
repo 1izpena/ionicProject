@@ -44,9 +44,13 @@
       </label>
 
       <ion-item class="item item-avatar item-icon-right" ng-repeat="user in systemUsers | filter:searchTextModal">
+        <!--
         <img
           ng-src="http://placehold.it/50/{{(window.localStorage.getItem('userid')!=message.user.id)?'55C1E7':'FA6F57'}}/fff&text={{user.username | limitTo:2 | uppercase }}"
           alt="User Avatar" class="img-circle"/>
+          -->
+        <img ng-src="http://www.gravatar.com/avatar/{{getHash(user.mail)}}?s=30&d=identicon"
+             alt="User Avatar" xclass="img-circle"/>
         <div class="row">
           <h2 class="col-90" ng-bind-html="highlight(user.username, searchTextModal)">@{{user.username}}</h2>
         </div>
@@ -64,9 +68,13 @@
       </label>
 
       <ion-item class="item item-avatar item-icon-right" ng-repeat="user in groups[activeGroup].users | filter:searchTextModal">
+        <!--
         <img
           ng-src="http://placehold.it/50/{{(window.localStorage.getItem('userid')!=message.user.id)?'55C1E7':'FA6F57'}}/fff&text={{user.username | limitTo:2 | uppercase }}"
           alt="User Avatar" class="img-circle"/>
+          -->
+        <img ng-src="http://www.gravatar.com/avatar/{{getHash(user.mail)}}?s=30&d=identicon"
+             alt="User Avatar" xclass="img-circle"/>
         <div class="row">
           <h2 class="col-90" ng-bind-html="highlight(user.username, searchTextModal)">@{{user.username}}</h2>
         </div>

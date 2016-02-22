@@ -4,7 +4,7 @@
 // 'starter' is the name of this angular module example (also set in a <body> attribute in index.html)
 // the 2nd parameter is an array of 'requires'
 // 'starter.controllers' is found in controllers.js
-angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDessiApp.config', 'ngAnimate', 'angularMoment', 'ngSanitize', 'textAngular', 'ngTagsInput', 'ngFileUpload', 'downgularJS'])
+angular.module('ionicDessiApp', ['ionic', 'ionicDessiApp.controllers', 'ionicDessiApp.config', 'ngAnimate', 'angularMoment', 'ngSanitize', 'textAngular', 'ngTagsInput', 'ngFileUpload', 'angular-md5'])
 
 .run(function($ionicPlatform) {
   $ionicPlatform.ready(function() {

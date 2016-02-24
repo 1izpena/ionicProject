@@ -591,11 +591,12 @@ angular.module('ionicDessiApp')
 
   }])
 
-  .service('ChatService', ['$http', '$q', 'API_BASE', 'Upload',
-    function($http, $q, API_BASE, Upload) {
+  .service('ChatService', ['$http', '$q', 'API_BASE', 'Upload', '$cordovaFileTransfer',
+    function($http, $q, API_BASE, Upload, $cordovaFileTransfer) {
 
       return {
         uploadFileS3: uploadFileS3,
+        uploadFileS3FromPicture: uploadFileS3FromPicture,
         getDownloadUrl: getDownloadUrl,
         postMessage: postMessage,
         getMessages: getMessages,
@@ -612,6 +613,7 @@ angular.module('ionicDessiApp')
         var promise = defered.promise;
 
         // getSignedUrl para subir fichero a AWS S3
+        console.log('******************************************************************************************************LLEGO AL SERVICIO***********************************************************');
         $http({
           method: 'post',
           url: API_BASE + 'api/v1/file/getSignedUrl',
@@ -622,12 +624,14 @@ angular.module('ionicDessiApp')
             'groupid': data.groupid,
             'channelid': data.channelid,
             'userid': data.userid,
-            'filename': data.file.name,
+            'filename': data.filename,
             'operation': 'PUT'
           }
         }).then( function(response){
             // Put del fichero en AWS S3
             //$http({
+            console.log('******************************************************************************************************LANZO A S3***********************************************************');
+            console.log(JSON.stringify(data.file));
             Upload.http({
               method: 'put',
               url: response.data.url,
@@ -645,6 +649,53 @@ angular.module('ionicDessiApp')
               function (progress) {
                 defered.notify(progress);
               });
+          },
+          function (err) {
+            defered.reject(err);
+          });
+
+        return promise;
+      }
+
+      function uploadFileS3FromPicture (data, imageuri) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+
+        // getSignedUrl para subir fichero a AWS S3
+        console.log('******************************************************************************************************LLEGO AL SERVICIO***********************************************************');
+        $http({
+          method: 'post',
+          url: API_BASE + 'api/v1/file/getSignedUrl',
+          headers: {
+            'x-access-token': window.localStorage.getItem('token')
+          },
+          data: {
+            'groupid': data.groupid,
+            'channelid': data.channelid,
+            'userid': data.userid,
+            'filename': data.filename,
+            'operation': 'PUT'
+          }
+        }).then( function(response){
+            // Put del fichero en AWS S3
+
+
+          $cordovaFileTransfer.upload(response.data.url, imageuri, null)
+            .then(function(result) {
+              // Success!
+              // Let the user know the upload is completed
+              console.log('upload to s3 succeed ', result);
+
+            }, function(err) {
+              // Error
+              // Uh oh!
+              $ionicLoading.show({template : 'Upload Failed', duration: 3000});
+              console.log('upload to s3 fail ', err);
+            }, function(progress) {
+
+              // constant progress updates
+            });
+
           },
           function (err) {
             defered.reject(err);
@@ -1155,7 +1206,7 @@ angular.module('ionicDessiApp')
 
         $http({
           method: 'POST',
-          url: API_BASE + '/api/v1/forumsearch',
+          url: API_BASE + 'api/v1/forumsearch',
           data: {key: request}
         }).then(
           function(response) {

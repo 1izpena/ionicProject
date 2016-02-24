@@ -56,7 +56,7 @@ angular.module('ionicDessiApp.controllers', [])
           $scope.loginmodal.hide();
           $state.go('chat.channel');
         }, function (res) {
-          showAlert(res.data.message);
+          showAlert(res.message);
         });
       }
 
@@ -141,7 +141,7 @@ angular.module('ionicDessiApp.controllers', [])
 
   })
 
-  .controller('ChatCtrl', function ($scope, $state, $ionicHistory, GroupsService, ChatService, $ionicPopup, Socket, $ionicScrollDelegate, $ionicLoading, $sce, $ionicModal, $ionicTabsDelegate, $ionicActionSheet, $ionicSideMenuDelegate, md5, SearchService) {
+  .controller('ChatCtrl', function ($scope, $state, $ionicHistory, GroupsService, ChatService, $ionicPopup, Socket, $ionicScrollDelegate, $ionicLoading, $sce, $ionicModal, $ionicTabsDelegate, $ionicActionSheet, $ionicSideMenuDelegate, md5, SearchService, $cordovaFileTransfer) {
 
     $scope.userid = window.localStorage.getItem('userid');
     $scope.username = window.localStorage.getItem('username');
@@ -164,6 +164,7 @@ angular.module('ionicDessiApp.controllers', [])
     $scope.searchModalClosed = true;
     $scope.notifications = {};
     $scope.globalSearchResult = [];
+    $scope.selectedIndex = 0;
 
     $scope.logout = function() {
 
@@ -919,7 +920,6 @@ angular.module('ionicDessiApp.controllers', [])
       $ionicActionSheet.show({
         buttons: [
           {text: 'Take picture'},
-          {text: 'Choose image from library'},
           {text: 'Upload a file'},
           {text: 'Create a question'}
         ],
@@ -932,13 +932,14 @@ angular.module('ionicDessiApp.controllers', [])
           if(index == 0){
             navigator.camera.getPicture(
               function(data) {
-                console.log(data);
+                console.log("**************************************************************************************************************"+data+'+++++++++++++++++++++++++++++++++++++++');
+                $scope.confirmTakePicture(data);
               }, function(err) {
                 showErrorAlert(err);
               }, null);
-          } else if(index == 2){
+          } else if(index == 1){
             ionic.trigger('click', { target: document.getElementsByClassName('file')[0] });
-          } else if(index == 3) {
+          } else if(index == 2) {
             if($scope.activeGroup !== -1 && $scope.activeChannel !== -1 && !$scope.showGroupSettings && !$scope.showChannelSettings) {
               $scope.newQuestion();
             }
@@ -1181,6 +1182,7 @@ angular.module('ionicDessiApp.controllers', [])
 
                 ChatService.uploadFileS3(uploadData).then(
                   function (result) {
+                    $ionicLoading.hide();
                     showToast('File uploaded successfully!!', $ionicLoading);
                     ChatService.postMessage(uploadData).then(
                       function (result) {
@@ -1197,13 +1199,102 @@ angular.module('ionicDessiApp.controllers', [])
                   },
                   function (progress) {
                     $scope.progress = Math.min(100, parseInt(100.0 * progress.loaded / progress.total));
-                    console.log('Uploading: '+progress+'%');
+                    $ionicLoading.show({
+                      template: $scope.progress+'%'
+                    });
+                    //console.log('Uploading: '+progress+'%');
                   }
                 );
               }
             }
           }
         ]
+      });
+    };
+
+    $scope.confirmTakePicture = function(fileData){
+
+      window.resolveLocalFileSystemURI(fileData, function(fileEntry) {
+        fileEntry.file(function(file) {
+          console.log('******************************************************************************************'+JSON.stringify(file));
+          var reader = new FileReader();
+          reader.onloadend = function (evt) {
+            var theBody = btoa(evt.target._result);
+            $ionicPopup.show({
+              template: '<label>Your Picture</label><input type="text" ng-model="pictureTitle"> <br> <label>Comment(Optional)</label> <input type="text" placeholder="Comment" ng-model="comment">',
+              title: 'Upload File',
+              scope: $scope,
+              buttons: [
+                {
+                  text: 'Cancel',
+                  onTap: function (e) {
+                    $scope.file = '';
+                  }
+                },
+                {
+
+                  text: '<b>Confirm</b>',
+                  type: 'button-positive',
+                  onTap: function (e) {
+                    var filename = 'Capture from ' + new Date();
+                    if ($scope.pictureTitle != undefined && $scope.pictureTitle != '') {
+                      filename = $scope.pictureTitle;
+                    }
+                    console.log('******************************************************************************************************' + filename + '*****************************************');
+
+                    $scope.progress = 0;
+                    $scope.uploading = true;
+                    var decodedData = window.atob(theBody);
+
+                    var uploadData = {
+                      userid: window.localStorage.getItem('userid'),
+                      groupid: $scope.groups[$scope.activeGroup].id,
+                      channelid: $scope.activeChannel.id,
+                      file: decodedData,
+                      filename: theBody,
+                      messageType: 'FILE'
+                    };
+
+                    if ($scope.comment) {
+                      uploadData.comment = $scope.comment;
+                    }
+
+                    ChatService.uploadFileS3(uploadData).then(
+                      function (result) {
+                        $ionicLoading.hide();
+                        //uploadData.file = fileEntry;
+                        showToast('File uploaded successfully!!', $ionicLoading);
+                        uploadData.file = file;
+                        uploadData.file.name = filename;
+                        uploadData.file.name = filename;
+                        ChatService.postMessage(uploadData).then(
+                          function (result) {
+
+                          },
+                          function (error) {
+                            showErrorAlert(error.data.message);
+                          }
+                        );
+
+                      },
+                      function (error) {
+                        showErrorAlert(error.data.message);
+                      },
+                      function (progress) {
+                        $scope.progress = Math.min(100, parseInt(100.0 * progress.loaded / progress.total));
+                        $ionicLoading.show({
+                          template: $scope.progress + '%'
+                        });
+                        //console.log('Uploading: '+progress+'%');
+                      }
+                    );
+                  }
+                }
+              ]
+            });
+          };
+          reader.readAsDataURL(file);
+        });
       });
     };
 
@@ -1607,7 +1698,16 @@ angular.module('ionicDessiApp.controllers', [])
       }
       $scope.$apply();
     });
+    /*
+    cordova.plugins.notification.local.on("click", function (notification, state) {
+      $scope.notificationActiveText = notification.text;
+      $scope.notificationActive = false;
+    }, this);
 
+    cordova.plugins.notification.local.on("click", function (notification, state) {
+      $scope.notificationActive = false;
+    }, this);
+    */
     //SEARCH
 
     $ionicModal.fromTemplateUrl('templates/globalSearch.html', {
@@ -1703,14 +1803,15 @@ angular.module('ionicDessiApp.controllers', [])
 
   })
 
-  .controller('ForumCtrl', function ($scope, ForumService, $sce, $stateParams, $ionicModal, $ionicPopup, LoginService, $state, $ionicActionSheet, $ionicHistory ) {
+  .controller('ForumCtrl', function ($scope, ForumService, $sce, $stateParams, $ionicModal, $ionicPopup, LoginService, $state, $ionicActionSheet, $ionicHistory, SearchService) {
 
     $scope.username = window.localStorage.getItem('username');
+    $scope.mail = window.localStorage.getItem('mail');
     $scope.questions = null;
     $scope.activeQuestion = null;
     $scope.activeQuestionIndex = -1;
     $scope.state = $state;
-    $scope.activeTile = 'latest';
+    $scope.selected = 'latest';
 
     $scope.goTo = function(where) {
       if(where === 'latest') {
@@ -1857,6 +1958,38 @@ angular.module('ionicDessiApp.controllers', [])
       });
 
       $state.go('home');
+
+    };
+
+    //SEARCH
+
+    $ionicModal.fromTemplateUrl('templates/globalSearchForum.html', {
+      scope: $scope,
+      animation: 'slide-in-up'
+    }).then(function (modal) {
+      $scope.globalsearchmodal = modal;
+    });
+
+    // Triggered in the login modal to close it
+    $scope.closeGlobalSearch = function () {
+      $scope.globalsearchmodal.hide();
+    };
+
+    $scope.globalSearch = function() {
+        $scope.globalsearchmodal.show();
+    };
+
+    $scope.doGlobalSearch = function (textToSearch) {
+
+      if(textToSearch != '') {
+        SearchService.forumsearch(textToSearch).then(
+          function (data) {
+            $scope.globalSearchResult = data;
+          }, function (err) {
+            showErrorAlert(err.message);
+          }
+        )
+      }
 
     };
 

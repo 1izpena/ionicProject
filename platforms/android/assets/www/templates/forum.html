@@ -50,7 +50,7 @@
 
     <ion-side-menu-content>
 
-      <ion-nav-bar class="bar-calm">
+      <ion-nav-bar class="bar-calm" align-title="center">
         <ion-nav-back-button>
         </ion-nav-back-button>
 
@@ -62,6 +62,9 @@
           <h1 class="title">
             Forum
           </h1>
+          <div class="buttons">
+            <button class="button button-icon icon ion-search" ng-click="globalSearch()"></button>
+          </div>
         </ion-nav-title>
 
       </ion-nav-bar>
@@ -116,7 +119,7 @@
           </span>
         </div>
         <div class="item sideItem sideUserName" >
-          <img ng-if="username !== undefined && username !== null" ng-src="http://www.gravatar.com/avatar/{{getHash(window.localStorage.getItem('mail'))}}?s=30&d=identicon"
+          <img ng-if="username !== undefined && username !== null" ng-src="http://www.gravatar.com/avatar/{{mail}}?s=30&d=identicon"
                alt="User Avatar" xclass="img-circle" style="border-radius: 100%;"/>
           <div>
             <label class="col sideUserNameMain" ng-if="username !== undefined && username !== null" ng-click="showLogoutAction()"><strong>{{'@'+username}}</strong> <span class="icon ion-android-arrow-dropdown"></span> </label>
@@ -132,26 +135,26 @@
             <span class="icon ion-plus-circled" ng-click="newQuestion()"></span>
           </ion-item>
 
-          <ion-item class="sideItem" ng-click="goTo('latest'); activeTile = 'latest';" ng-class="activeTile == 'latest'? 'activeTile' : ''" menu-close>
+          <ion-item id="latest" class="sideItem" ng-click="goTo('latest'); $parent.selected='latest';" ng-class="{activeTile: $parent.selected=='latest'}" menu-close>
             <span class="icon ion-help-circled"></span>
             Latest Questions
           </ion-item>
 
-          <ion-item class="sideItem" ng-click="goTo('viewed'); activeTile = 'viewed';" ng-class="activeTile == 'viewed'? 'activeTile' : ''" menu-close>
+          <ion-item id="viewed" class="sideItem" ng-click="goTo('viewed'); $parent.selected='viewed';" ng-class="{activeTile: $parent.selected=='viewed'}" menu-close>
             <span class="icon ion-help-circled"></span>
             Most Viewed
           </ion-item>
 
-          <ion-item class="sideItem" ng-click="goTo('voted'); activeTile = 'voted';" ng-class="activeTile == 'voted'? 'activeTile' : ''" menu-close>
+          <ion-item id="voted" class="sideItem" ng-click="goTo('voted'); $parent.selected='voted';" ng-class="{activeTile: $parent.selected=='voted'}" menu-close>
             <span class="icon ion-help-circled"></span>
             Most Voted
           </ion-item>
 
-          <ion-item class="item-positive item-divider" ng-class="activeTile == 'tags'? 'activeTile' : ''" ng-click="activeTile = 'tags'" menu-close>
+          <ion-item class="item-positive item-divider">
             Tags
           </ion-item>
 
-          <ion-item class="sideItem" ng-click="goTo('tags')">
+          <ion-item  id="tags" class="sideItem" ng-click="goTo('tags'); $parent.selected='tags';" ng-class="{activeTile: $parent.selected=='tags'}" menu-close>
             <span class="icon ion-help-circled"></span>
             View Tags
           </ion-item>

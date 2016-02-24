@@ -47,7 +47,7 @@
 
 
     <ion-side-menu-content>
-      <ion-nav-bar class="bar-calm">
+      <ion-nav-bar class="bar-calm" align-title="center">
         <ion-nav-back-button>
         </ion-nav-back-button>
 
@@ -141,11 +141,11 @@
             </div>
           </div>
           <!-- Groups -->
-          <ion-item ng-click="updateActiveGroup(-1); unhideChannels(false); unhideUsers(false);" class="item-positive item-divider item-divider-principal item-icon-right">
-            <i class="icon ion-arrow-up-a"></i>
+          <ion-item ng-click="updateActiveGroup(-1); unhideChannels(false); unhideUsers(false); $parent.$parent.selectedSideIndex = '';" class="item-positive item-divider item-divider-principal">
+            <i class="icon ion-arrow-up-a" ng-show="activeGroup !== -1"></i>
             Groups
             <div class="item-icon-right">
-              <i class="icon ion-plus-circled" ng-click="showNewGroupPopup()"></i>
+            <i class="icon ion-plus-circled" ng-click="showNewGroupPopup()"></i>
             </div>
           </ion-item>
 
@@ -171,7 +171,7 @@
           <div class="channels" ng-show="showChannels">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index" ng-repeat="channels in group.publicChannels">
-                <ion-item class="sideItem" ng-click="clearMessages(); selectChannel($index, 'public');" menu-close>
+                <ion-item class="sideItem" ng-click="$parent.$parent.$parent.$parent.selectedSideIndex=channels.id; selectChannel($index, 'public');" ng-class="{activeTile: $parent.$parent.$parent.$parent.selectedSideIndex==channels.id}" menu-close>
                   <span class="icon ion-android-chat"> </span>
                   {{channels.channelName}}
                   <span class="badge badge-assertive" id="{{channels.id}}-badge" ng-show="notifications[channels.id] > 0">{{notifications[channels.id]}}</span>
@@ -188,7 +188,7 @@
           <div class="channels" ng-show="showChannels">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index" ng-repeat="channels in group.privateChannels">
-                <ion-item class="sideItem" ng-click="clearMessages(); selectChannel($index, 'private');" menu-close>
+                <ion-item class="sideItem" ng-click="clearMessages(); selectChannel($index, 'private'); $parent.$parent.$parent.$parent.selectedSideIndex=channels.id;" ng-class="{activeTile: $parent.$parent.$parent.$parent.selectedSideIndex==channels.id}"  menu-close>
                   <span class="icon ion-android-chat"> </span>
                   {{channels.channelName}}
                   <span class="badge badge-assertive" id="{{channels.id}}-badge" ng-show="notifications[channels.id] > 0">{{notifications[channels.id]}}</span>
@@ -209,7 +209,7 @@
           <div class="users" ng-show="showUsers">
             <div ng-repeat="group in groups">
               <div ng-show="activeGroup === $parent.$index" ng-repeat="user in group.users">
-                <ion-item class="sideItem" ng-click="searchDirectChannel(user)" ng-show="user.id != userid" menu-close>
+                <ion-item class="sideItem" ng-click="searchDirectChannel(user); $parent.$parent.$parent.$parent.selectedSideIndex=user.mail;" ng-class="{activeTile: $parent.$parent.$parent.$parent.selectedSideIndex==user.mail}" ng-show="user.id != userid" menu-close>
                   <span class="icon ion-ios-checkmark" ng-class="users[user.id] ? 'balanced' : ''"> </span>
                   {{user.username}}
                   <span class="badge badge-assertive" id="{{user.id}}-badge" ng-show="notifications[user.id] > 0">{{notifications[user.id]}}</span>

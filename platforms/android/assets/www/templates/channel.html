@@ -70,7 +70,7 @@
 
           <div class="item item-text-wrap" ng-if="message.messageType == 'FILE'">
             {{message.text}}
-            <a href="#" ng-click="getDownloadLink(message.filename, $event)">
+            <a href="#" ng-click="getDownloadLink(message.filename, $event, message.user.id)">
               <span class="icon ion-document-text" style="font-size: 30px;"></span> {{message.filename}}
             </a>
           </div>

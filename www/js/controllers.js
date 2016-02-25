@@ -1298,12 +1298,12 @@ angular.module('ionicDessiApp.controllers', [])
       });
     };
 
-    $scope.getDownloadLink = function (filename, ev) {
+    $scope.getDownloadLink = function (filename, ev, userid) {
 
       ev.preventDefault();
 
       var data = {
-        userid: window.localStorage.getItem('userid'),
+        userid: userid,
         groupid: $scope.groups[$scope.activeGroup].id,
         channelid: $scope.activeChannel.id,
         filename: filename

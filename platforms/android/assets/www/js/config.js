@@ -2,7 +2,7 @@ angular.module('ionicDessiApp.config', [])
     .constant('APP_NAME','My App')
     .constant('APP_VERSION','0.1')
     /*Para browser*/
-    .constant('API_BASE', 'http://130.206.138.182:8000/')
+    .constant('API_BASE', 'http://192.168.1.36:3000/')
     /*Para android emulator
     .constant('API_BASE', 'http://10.0.2.2:3000/')*/
     /*Para genymotion

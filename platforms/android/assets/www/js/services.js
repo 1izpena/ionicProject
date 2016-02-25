@@ -679,7 +679,7 @@ angular.module('ionicDessiApp')
         }).then( function(response){
             // Put del fichero en AWS S3
 
-
+          /*
           $cordovaFileTransfer.upload(response.data.url, imageuri, null)
             .then(function(result) {
               // Success!
@@ -695,6 +695,23 @@ angular.module('ionicDessiApp')
 
               // constant progress updates
             });
+            */
+            var options = new FileUploadOptions();
+            options.chunkedMode = false;
+            options.httpMethod = 'PUT';
+            options.headers = {
+              'x-access-token': window.localStorage.getItem('token'),
+              'Content-Type': 'image/jpeg'
+            };
+
+            var ft = new FileTransfer();
+            ft.upload(imageuri, response.data.url,
+              function (e) {
+                defered.resolve(e);
+              },
+              function (e) {
+                defered.reject(e);
+              }, options);
 
           },
           function (err) {

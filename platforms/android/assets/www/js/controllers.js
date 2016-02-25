@@ -141,7 +141,7 @@ angular.module('ionicDessiApp.controllers', [])
 
   })
 
-  .controller('ChatCtrl', function ($scope, $state, $ionicHistory, GroupsService, ChatService, $ionicPopup, Socket, $ionicScrollDelegate, $ionicLoading, $sce, $ionicModal, $ionicTabsDelegate, $ionicActionSheet, $ionicSideMenuDelegate, md5, SearchService, $cordovaFileTransfer) {
+  .controller('ChatCtrl', function ($scope, $state, $ionicHistory, GroupsService, ChatService, $ionicPopup, Socket, $ionicScrollDelegate, $ionicLoading, $sce, $ionicModal, $ionicTabsDelegate, $ionicActionSheet, $ionicSideMenuDelegate, md5, SearchService, $cordovaFile) {
 
     $scope.userid = window.localStorage.getItem('userid');
     $scope.username = window.localStorage.getItem('username');
@@ -919,9 +919,9 @@ angular.module('ionicDessiApp.controllers', [])
       // Show the action sheet
       $ionicActionSheet.show({
         buttons: [
-          {text: 'Take picture'},
-          {text: 'Upload a file'},
-          {text: 'Create a question'}
+          {text: '<i class="icon ion-camera"></i>Take picture'},
+          {text: '<i class="icon ion-document"></i>Upload a file'},
+          {text: '<i class="icon ion-help"></i>Create a question'}
         ],
         titleText: 'Action',
         cancelText: 'Cancel',
@@ -1216,12 +1216,14 @@ angular.module('ionicDessiApp.controllers', [])
 
       window.resolveLocalFileSystemURI(fileData, function(fileEntry) {
         fileEntry.file(function(file) {
+          $scope.filename = file.name;
+          console.log('******************************************************************************************'+JSON.stringify(fileData));
           console.log('******************************************************************************************'+JSON.stringify(file));
           var reader = new FileReader();
           reader.onloadend = function (evt) {
             var theBody = btoa(evt.target._result);
             $ionicPopup.show({
-              template: '<label>Your Picture</label><input type="text" ng-model="pictureTitle"> <br> <label>Comment(Optional)</label> <input type="text" placeholder="Comment" ng-model="comment">',
+              template: '<label>Your Picture</label><input type="text" ng-value="filename" disabled> <br> <label>Comment(Optional)</label> <input type="text" placeholder="Comment" ng-model="comment">',
               title: 'Upload File',
               scope: $scope,
               buttons: [
@@ -1242,6 +1244,8 @@ angular.module('ionicDessiApp.controllers', [])
                     }
                     console.log('******************************************************************************************************' + filename + '*****************************************');
 
+
+
                     $scope.progress = 0;
                     $scope.uploading = true;
                     var decodedData = window.atob(theBody);
@@ -1250,8 +1254,8 @@ angular.module('ionicDessiApp.controllers', [])
                       userid: window.localStorage.getItem('userid'),
                       groupid: $scope.groups[$scope.activeGroup].id,
                       channelid: $scope.activeChannel.id,
-                      file: decodedData,
-                      filename: theBody,
+                      file: file,
+                      filename: file.name,
                       messageType: 'FILE'
                     };
 
@@ -1259,25 +1263,24 @@ angular.module('ionicDessiApp.controllers', [])
                       uploadData.comment = $scope.comment;
                     }
 
-                    ChatService.uploadFileS3(uploadData).then(
+                    ChatService.uploadFileS3FromPicture(uploadData, fileData).then(
                       function (result) {
                         $ionicLoading.hide();
                         //uploadData.file = fileEntry;
                         showToast('File uploaded successfully!!', $ionicLoading);
-                        uploadData.file = file;
-                        uploadData.file.name = filename;
-                        uploadData.file.name = filename;
                         ChatService.postMessage(uploadData).then(
                           function (result) {
 
                           },
                           function (error) {
+                            console.log('-----------------------------------------------'+JSON.stringify(error));
                             showErrorAlert(error.data.message);
                           }
                         );
 
                       },
                       function (error) {
+                        console.log('++++++++++++++++++++++++++++++++++++++++++++++++'+JSON.stringify(error));
                         showErrorAlert(error.data.message);
                       },
                       function (progress) {

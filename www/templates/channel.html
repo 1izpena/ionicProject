@@ -38,7 +38,7 @@
           <div class="item item-divider item-positive item-icon-right" ng-if="message.messageType == 'QUESTION'">
             <span class="ion-help-circled"></span>
             QUESTION
-            <span class="icon ion-android-share" ng-if="message.user.id === userid" ng-click="shareQuestion(message)"></span>
+            <span class="icon ion-android-share" ng-if="message.user.id === userid && !message.publish" ng-click="shareQuestion(message)"></span>
           </div>
 
           <div class="item item-avatar">

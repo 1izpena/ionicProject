@@ -390,7 +390,8 @@ angular.module('ionicDessiApp.controllers', [])
     }
 
     $scope.gotoAnchor = function (anchor) {
-      $ionicScrollDelegate.anchorScroll(anchor);
+      $ionicScrollDelegate.scrollTo(0, document.getElementById('56cf0485591482783e6595dc').offsetTop, true);
+      //$ionicScrollDelegate.anchorScroll(anchor);
     }
 
     $scope.trustAsHtml = function(string) {

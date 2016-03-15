@@ -13,6 +13,54 @@
 }
 
 
+.card .item:last-child a {
+  color: cornflowerblue;
+
+}
+
+/*.card .item:last-child a:hover,
+.card .item:last-child a:focus {
+  text-decoration: none;
+  font-weight:bolder;
+  cursor: pointer;
+}*/
+
+
+
+
+.item-button-right {
+  padding-left:0;
+  padding-right: 3.5em;
+
+}
+
+.card .item:last-child .metadatalinks{
+
+  border-left-width: 0.5em;
+  border-left-style:solid;
+  border-left-color: lavender;
+
+}
+
+
+.card .item:last-child .metadatalinks iframe{
+
+  width: 100%;
+  height: 100%;
+
+}
+
+
+.card .item:last-child .metadatalinks img{
+
+  width: 50%;
+  height: 50%;
+
+}
+
+
+
+
 .titleContainer {
   width: 100%;
   text-align: center;

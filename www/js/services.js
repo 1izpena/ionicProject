@@ -605,7 +605,8 @@ angular.module('ionicDessiApp')
         refuseInvitation: refuseInvitation,
         getSystemUsers : getSystemUsers,
         postAnswer: postAnswer,
-        publishMessage: publishMessage
+        publishMessage: publishMessage,
+        getMetaTags: getMetaTags
       };
 
       function uploadFileS3 (data) {
@@ -922,6 +923,39 @@ angular.module('ionicDessiApp')
         return promise;
 
       }
+
+
+      /** new ***/
+
+      function getMetaTags (data) {
+        var defered = $q.defer();
+        var promise = defered.promise;
+
+        var userid = data.userid;
+
+
+        $http({
+          method: 'post',
+          headers: {'Content-Type': 'application/json', 'x-access-token': window.localStorage.getItem('token')},
+          url: API_BASE + 'api/v1/users/'+userid+'/get_meta',
+          data: {
+            data: data.url
+          }
+        }).then(
+          function(response) {
+            defered.resolve(response);
+          },
+          function(error){
+            defered.reject(error);
+          }
+        );
+
+        return promise;
+
+      }
+
+
+      /** new **/
 
     }])
 

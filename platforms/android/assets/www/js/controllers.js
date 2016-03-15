@@ -56,6 +56,12 @@ angular.module('ionicDessiApp.controllers', [])
           $scope.loginmodal.hide();
           $state.go('chat.channel');
         }, function (res) {
+          console.log("****************************************************************hay error, por que??");
+          console.log(JSON.stringify(res));
+          for(var i = 0; i<res.length; i++){
+            console.log("ESto vale el objeto en i: "+res[i]);
+
+          }
           showAlert(res.message);
         });
       }
@@ -63,6 +69,8 @@ angular.module('ionicDessiApp.controllers', [])
     };
 
     function showAlert(message) {
+      console.log("cual es el error2?");
+      console.log(message);
       var alertPopup = $ionicPopup.alert({
         title: 'Error!!',
         template: message
@@ -329,12 +337,28 @@ angular.module('ionicDessiApp.controllers', [])
 
       if (type === 'public') {
         ChatService.getMessages($scope.groups[groupindex].id, $scope.activeChannel).then(function (data) {
+
+          for(var i = 0; i < data.data.length; i++){
+            if(data.data[i].messageType == 'URL'){
+              data.data[i].visible = 0;
+            }
+          }
+
+
           $scope.messagess = data.data;
 
           //addMessages(data);
         });
       } else {
         ChatService.getMessages($scope.groups[groupindex].id, $scope.activeChannel).then(function (data) {
+
+          for(var i = 0; i < data.data.length; i++){
+            if(data.data[i].messageType == 'URL'){
+              data.data[i].visible = 0;
+            }
+          }
+
+
           $scope.messagess = data.data;
           //addMessages(data);
         });
@@ -390,7 +414,8 @@ angular.module('ionicDessiApp.controllers', [])
     }
 
     $scope.gotoAnchor = function (anchor) {
-      $ionicScrollDelegate.anchorScroll(anchor);
+      $ionicScrollDelegate.scrollTo(0, document.getElementById('56cf0485591482783e6595dc').offsetTop, true);
+      //$ionicScrollDelegate.anchorScroll(anchor);
     }
 
     $scope.trustAsHtml = function(string) {
@@ -469,6 +494,203 @@ angular.module('ionicDessiApp.controllers', [])
       }
     };
 
+
+
+    /** new **/
+
+    $scope.changeVisible = function ($index) {
+      console.log("cambio visible aaa ");
+
+
+      if($scope.messagess[$index].visible == 0){
+        $scope.messagess[$index].visible = 1;
+
+
+
+      }
+      else{
+        $scope.messagess[$index].visible = 0;
+
+      }
+      console.log($scope.messagess[$index].visible );
+
+    };
+
+
+
+
+    $scope.getMetaTags = function (msg, $index) {
+      var url = msg.text;
+      console.log("entro en metatags");
+
+      var userid = window.localStorage.getItem('userid');
+
+      var data = {
+        userid: userid,
+        url: url
+      };
+
+
+      ChatService.getMetaTags(data).then(
+        function(result) {
+
+
+          console.log("esto vale data");
+          console.log(result);
+
+          if(result.data == null){
+            /* si la url no esta soportada */
+            console.log("hay error al coger los metadatos");
+            $scope.messagess[$index].response_data_url = $sce.trustAsHtml( "<h3> No information available </h3>");
+          }
+          else{
+
+
+            /* sino tiene tipo es 1 link */
+            if(typeof (result.data.type) == 'undefined'){
+              /* 1 link puede tener imagen o no */
+
+              var image = '';
+              var tittle = '';
+              var descrip = '';
+              var author_link = '';
+              var keywords = '';
+
+              if(typeof (result.data.title) !== 'undefined') {
+                tittle = "<h3>"+result.data.title+"</h3>";
+
+              }
+
+              if(typeof (result.data.description) !== 'undefined') {
+                descrip = "<p>"+result.data.description+"</p>";
+
+              }
+
+              if(typeof (result.data.author) !== 'undefined') {
+                author_link = "<p>From "+result.data.author+"</p>";
+
+              }
+
+              if(result.data.keywords.length > 0) {
+                for(var i = 0; i<  result.data.keywords.length; i++){
+                  keywords = keywords + "<p><span class='label label-info'>"+result.data.keywords[i]+"</span></p>";
+
+                }
+
+              }
+
+
+              if(typeof (result.data.image) !== 'undefined') {
+                image = "<img src=" + result.data.image + ">";
+
+              }
+
+              $scope.messagess[$index].response_data_url = $sce.trustAsHtml( tittle +
+                descrip +
+                author_link +
+                keywords +
+                image);
+
+
+            }/* end if typeof (result.type) == 'undefined' */
+            /* es 1 video, audio, etc. */
+            else{
+              /* si es video = html
+               * si es foto url para src de img
+               * si es rich = html */
+
+              var author = '';
+              var html_img = '';
+              var title2 = '';
+              var provider = '';
+
+              if(typeof (result.data.title) !== 'undefined'){
+                title2 = "<h3>"+result.data.title+"</h3>";
+              }
+
+
+              if(typeof (result.data.provider_name) !== 'undefined'){
+                provider = "<p>"+result.data.provider_name+"</p>";
+              }
+
+
+              if(typeof (result.data.author_name) !== 'undefined'){
+                author = "<p> From "+result.data.author_name+"</p>";
+              }
+
+
+              if(result.data.type == 'video' || result.data.type == 'rich'){
+                html_img = result.data.html;
+              }
+
+              else if(result.data.type == 'photo'){
+                html_img = "<img src="+result.data.url+">";
+              }
+
+              $scope.messagess[$index].response_data_url = $sce.trustAsHtml(title2 +
+                provider +
+                author +
+                html_img);
+
+
+            }/* end else typeof (data.type) == 'undefined' */
+
+          }
+
+
+
+          /*$scope.gotoAnchor(msg.id);*/
+
+
+        },
+        function(error) {
+          // TODO: mostrar error
+          console.log("error getMetaTags");
+          console.log(error);
+        }
+      );
+
+    };
+
+
+
+
+
+    /** end new **/
+
+
+    /**** new ***/
+
+    $scope.loadUrl = function (url) {
+
+      window.open(url, '_system', 'location=no');
+      showToast('Started load url', $ionicLoading);
+
+
+    }
+
+
+
+    function findUrls( text )
+    {
+      var source = (text || '').toString();
+      var urlArray = [];
+      var url;
+      var matchArray;
+
+      // Regular expression to find FTP, HTTP(S) and email URLs.
+      var regexToken = /(((ftp|https?):\/\/)[\-\w@:%_\+.~#?,&\/\/=]+)|((mailto:)?[_.\w-]+@([\w][\w\-]+\.)+[a-zA-Z]{2,3})/g;
+
+      // Iterate through any URLs in the text.
+      while( (matchArray = regexToken.exec( source )) !== null )
+      {
+        var token = matchArray[0];
+        urlArray.push( token );
+      }
+
+      return urlArray;
+    }
+
     $scope.sendText = function (text) {
 
       //addMessage(text);
@@ -476,10 +698,14 @@ angular.module('ionicDessiApp.controllers', [])
       //$scope.messagess.push(data);
       if ($scope.activeGroup === -1) {
         showToast('Seleccione un grupo', $ionicLoading);
-      } else {
+      }
+      else {
+
+
         if ($scope.activeChannel === null) {
           showToast('Seleccione un canal', $ionicLoading);
-        } else {
+        }
+        else {
           var data = {
             userid: window.localStorage.getItem('userid'),
             groupid: $scope.groups[$scope.activeGroup].id,
@@ -488,19 +714,148 @@ angular.module('ionicDessiApp.controllers', [])
             messageType: 'TEXT'
           };
 
-          ChatService.postMessage(data).then(
-            function (result) {
-              $scope.text = "";
-              console.log(result.data);
-            },
-            function (error) {
-              // TODO: Mostrar error
-              console.log(error);
+          var tempdata = text.slice();
+          var arrayurls = findUrls(tempdata);
+          var atempdata = tempdata.split(" ");
+
+
+          /* sino hay url se manda el mensaje */
+          if (arrayurls.length == 0) {
+            ChatService.postMessage(data).then(
+              function (result) {
+                $scope.text = "";
+                console.log(result.data);
+              },
+              function (error) {
+                // TODO: Mostrar error
+                console.log(error);
+              }
+            );
+
+          }
+          /* hay urls */
+          else {
+            /* si hay urls pero es lo uniko */
+            if (atempdata.length == 1) {
+              data.messageType = 'URL';
+
+              ChatService.postMessage(data).then(
+                function (result) {
+                  $scope.text = "";
+                  console.log(result.data);
+                },
+                function (error) {
+                  // TODO: Mostrar error
+                  console.log(error);
+                }
+              );
+
             }
-          );
-        }
-      }
+            /* si hay de tod0: texto y urls  */
+            else {
+
+              var sortarrayall = [];
+              var texttemp = '';
+              var indexsortarrayall = 0;
+              var indexurls = 0;
+
+              /* para cada obj mirar si es o no url
+               * sino lo es: lo vamos metiendo tod0 en 1 var temporal
+               * si lo es, hacemos push de la temporal y luego de la url */
+
+              for (var i = 0; i < atempdata.length; i++) {
+
+                if (atempdata[i] == arrayurls[indexurls]) {
+                  /* metemos lo anterior si hay, y sino la url */
+
+                  if (texttemp !== '') {
+                    var objdata = {};
+                    objdata.text = texttemp;
+                    objdata.messageType = 'TEXT';
+                    sortarrayall[indexsortarrayall] = objdata;
+                    texttemp = '';
+                    indexsortarrayall++;
+
+                  }
+                  var objdata = {};
+                  objdata.text = atempdata[i];
+                  objdata.messageType = 'URL';
+                  sortarrayall[indexsortarrayall] = objdata;
+                  indexsortarrayall++;
+                  indexurls++;
+
+
+                }
+                else {
+                  //si es la ultima posicion en el for y no es url, meterlo en el array
+
+                  if (i == atempdata.length - 1 && atempdata[i] !== '') {
+                    var objdata = {};
+
+                    texttemp = texttemp + atempdata[i] + " ";
+                    objdata.text = texttemp;
+                    objdata.messageType = 'TEXT';
+                    sortarrayall[indexsortarrayall] = objdata;
+                    texttemp = '';
+
+                    indexsortarrayall++;
+
+
+                  }
+                  texttemp = texttemp + atempdata[i] + " ";
+
+                }
+
+              }
+              /* end for */
+              /* ahora que tenemos los campos a modificar y enteros
+               los mandamos*/
+
+              angular.forEach(sortarrayall, function (value, key) {
+
+                var data = {
+                  userid: window.localStorage.getItem('userid'),
+                  groupid: $scope.groups[$scope.activeGroup].id,
+                  channelid: $scope.activeChannel.id,
+                  text: value.text,
+                  messageType: value.messageType
+                };
+
+                console.log("esto envio desde el controlador");
+                console.log("con index " + key);
+                console.log(data.text);
+                console.log(data.messageType);
+                console.log("********************");
+
+                ChatService.postMessage(data).then(
+                  function (result) {
+                    $scope.text = "";
+                    console.log(result.data);
+                  },
+                  function (error) {
+                    // TODO: Mostrar error
+                    console.log(error);
+                  }
+                );
+
+
+              });
+              /* end foreach */
+
+            }
+            /* end else:hay urls y texto normal */
+
+          }
+          /*end else arrayurls.length == 0 */
+        } /* end else $scope.activeChannel === null */
+      } /* end else $scope.activeGroup === -1 */
+
     };
+
+
+
+    /** end new **/
+
     /*
      $scope.clearMessages = function() {
      var div = document.getElementById('cardList');
@@ -1331,7 +1686,16 @@ angular.module('ionicDessiApp.controllers', [])
     Socket.on('newMessage', function (data) {
       var messageGroupName = getGroup(data.groupid);
       //var notificationId = getNotificationId();
+      /* si esta en el canal */
       if(($scope.activeChannel != null && data.message.channel.id === $scope.activeChannel.id) || ($scope.activeChannel != null && data.message.channel.channelType == 'DIRECT' && data.message.channel.channelName == $scope.activeChannel.channelName.split('-')[1]+'-'+$scope.activeChannel.channelName.split('-')[0])) {
+
+        if(data.message.messageType == 'URL'){
+
+          data.message.visible = 0;
+
+
+        }
+
         $scope.messagess.push(data.message);
       } else {
         $scope.notifications[data.groupid]++;
@@ -1905,6 +2269,7 @@ angular.module('ionicDessiApp.controllers', [])
 
     // Open the login modal
     $scope.login = function () {
+      console.log("Entro en login");
       $scope.loginmodal.show();
     };
 
